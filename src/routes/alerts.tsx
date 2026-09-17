@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { PlayShell } from "@/components/play-shell";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -7,39 +6,31 @@ export const Route = createFileRoute("/alerts")({ component: Alerts });
 
 function Alerts() {
   const { user, isPending } = useCurrentUserState();
-  const [news, setNews] = useState(false);
   return (
-    <PlayShell heroTitle="Alerts" heroLine="Welcome pings, review status, Flint verification. The tray, not the firehose.">
+    <PlayShell heroTitle="Alerts" heroLine="Claims, desk tickets, soon-listings that woke up.">
       {isPending ? (
         <div className="h-20 animate-pulse rounded-xl bg-raised" />
-      ) : (
+      ) : user ? (
         <ul className="divide-y divide-line text-[13px]">
           <li className="py-3">
-            <p className="font-medium">Welcome to the yard</p>
-            <p className="text-[12px] text-muted">Daily: claims, desk tickets, coming-soon listings that woke up.</p>
+            <p className="font-medium">You’re signed in</p>
+            <p className="text-[12px] text-muted">
+              This tray catches three things: (1) someone requested to claim an app, (2) a Desk
+              ticket is waiting, (3) a coming-soon listing got a live URL.
+            </p>
           </li>
-          <li className="py-3">
-            <p className="font-medium">Reviews</p>
-            <p className="text-[12px] text-muted">Reviewed vs pending. Nothing pending.</p>
-          </li>
-          <li className="py-3">
-            <p className="font-medium">Flint verification</p>
-            <p className="text-[12px] text-muted">When a contribution clears, it lands here. Empty is honest.</p>
+          <li className="py-3 text-muted">
+            No live pings yet. When a maker files a claim or buys a desk seat, it lands here.
           </li>
         </ul>
-      )}
-      <label className="mt-4 flex items-center gap-2 text-[12px]">
-        <input type="checkbox" checked={news} onChange={(e) => setNews(e.target.checked)} />
-        Monthly newsletter — early access to competitions
-      </label>
-      {!user && !isPending ? (
-        <p className="mt-3 text-[12px] text-muted">
+      ) : (
+        <p className="text-[13px] text-muted">
+          Sign in to keep alerts.{" "}
           <Link to="/login" className="text-primary">
             Sign in
-          </Link>{" "}
-          to keep the tray attached to you.
+          </Link>
         </p>
-      ) : null}
+      )}
     </PlayShell>
   );
 }

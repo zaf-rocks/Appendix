@@ -1,11 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Bookmark, GripVertical, Star } from "lucide-react";
+import { Bookmark, Star } from "lucide-react";
 import { AppIcon } from "@/components/app-icon";
 import { StatusDot } from "@/components/store-shell";
 import { listingStatus, type AppEntry } from "@/lib/catalog";
 import { isSaved, openCount, toggleSave } from "@/lib/yard";
-import { PeekSave } from "@/components/peek-save";
 import { cn } from "@/lib/cn";
 
 function save(id: string) {
@@ -23,14 +22,12 @@ export function Rail({
   apps,
   rows = 1,
   special,
-  tone,
   emptyHint = "Nothing vibe-coded in this aisle yet.",
 }: {
   title: string;
   apps: AppEntry[];
   rows?: number;
   special?: boolean;
-  tone?: "suggested" | "editors" | "sponsored";
   emptyHint?: string;
 }) {
   const shown = apps.slice(0, 80);
@@ -38,7 +35,7 @@ export function Rail({
   return (
     <section>
       {special ? (
-        <h2 className={cn("special-bar", tone && `tone-${tone}`)}>{title}</h2>
+        <h2 className="special-bar">{title}</h2>
       ) : (
         <h2 className="text-[10px] font-medium tracking-wide text-muted uppercase">{title}</h2>
       )}
@@ -61,41 +58,37 @@ export function Rail({
 
 function RailCard({ app }: { app: AppEntry }) {
   const [saved, setSaved] = useState(() => isSaved(app.id));
-  const [peek, setPeek] = useState(false);
   const hold = useRef<number | null>(null);
   function press() {
-    hold.current = window.setTimeout(() => setPeek(true), 450);
+    hold.current = window.setTimeout(() => setSaved(save(app.id)), 450);
   }
   function clear() {
     if (hold.current) window.clearTimeout(hold.current);
     hold.current = null;
   }
   return (
-    <>
-      <Link
-        to="/app/$id"
-        params={{ id: app.id }}
-        search={{ desk: undefined }}
-        className="w-[58px] shrink-0"
-        onContextMenu={(e) => {
-          e.preventDefault();
-          setPeek(true);
-        }}
-        onTouchStart={press}
-        onTouchEnd={clear}
-        onMouseDown={press}
-        onMouseUp={clear}
-        onMouseLeave={clear}
-      >
-        <AppIcon name={app.name} iconUrl={app.iconUrl} className="size-12 rounded-[22%] text-[10px]" />
-        <p className="mt-0.5 truncate text-[8px] leading-tight font-medium">{app.name}</p>
-        <p className="flex items-center gap-0.5 truncate text-[7px] text-muted">
-          <StatusDot app={app} />
-          {app.developer}
-        </p>
-      </Link>
-      {peek ? <PeekSave app={app} onClose={() => { setPeek(false); setSaved(isSaved(app.id)); }} /> : null}
-    </>
+    <Link
+      to="/app/$id"
+      params={{ id: app.id }}
+      search={{ desk: undefined }}
+      className="w-[58px] shrink-0"
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setSaved(save(app.id));
+      }}
+      onTouchStart={press}
+      onTouchEnd={clear}
+      onMouseDown={press}
+      onMouseUp={clear}
+      onMouseLeave={clear}
+    >
+      <AppIcon name={app.name} iconUrl={app.iconUrl} className="size-12 rounded-[22%] text-[10px]" />
+      <p className="mt-0.5 truncate text-[8px] leading-tight font-medium">{app.name}</p>
+      <p className="flex items-center gap-0.5 truncate text-[7px] text-muted">
+        <StatusDot app={app} />
+        {app.developer}
+      </p>
+    </Link>
   );
 }
 
@@ -105,7 +98,7 @@ export function FeatureRail({ title, apps, kind }: { title: string; apps: AppEnt
   const col = kind === "sponsored" ? "w-[62px]" : "w-[58px]";
   return (
     <section>
-      <h2 className={cn("special-bar", kind === "editors" ? "tone-editors" : "tone-sponsored")}>{title}</h2>
+      <h2 className="special-bar">{title}</h2>
       {shown.length ? (
         <div className="-mx-3 mt-1.5 flex gap-1.5 overflow-x-auto px-3 pb-0.5">
           {shown.map((app) => (
@@ -194,11 +187,6 @@ function RankRow({ app, n, swipe }: { app: AppEntry; n: number; swipe?: boolean 
             Save
           </div>
         ) : null}
-        {swipe ? (
-          <div className="absolute inset-y-0 left-0 grid w-20 place-items-center bg-primary text-[10px] font-semibold text-primary-fg">
-            Peek
-          </div>
-        ) : null}
         <div
           className="flex w-full items-center gap-1.5 bg-bg py-1.5 text-left"
           style={swipe ? { transform: `translateX(${dx}px)` } : undefined}
@@ -208,9 +196,6 @@ function RankRow({ app, n, swipe }: { app: AppEntry; n: number; swipe?: boolean 
             onClick={() => nav({ to: "/app/$id", params: { id: app.id }, search: { desk: undefined } })}
             className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
           >
-            <span className="w-3 text-subtle">
-              <GripVertical className="size-3" />
-            </span>
             <span className="w-4 text-[10px] text-subtle">{n}</span>
             <AppIcon name={app.name} iconUrl={app.iconUrl} className="size-10 text-[10px]" />
             <div className="min-w-0 flex-1">

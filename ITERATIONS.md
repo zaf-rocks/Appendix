@@ -4,7 +4,7 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 
 **How to go back:** say the pass number (or a named beat: “single rows,” “monument hero,” “pre-well”). This file is the map. Snapshots live in git tags `pass-NN` when a pass is closed.
 
-**Current live pass:** **12 — Spec V.1.0** (2026-09-16 night)
+**Current live pass:** **13 — revert Spec V.1.0** (2026-09-16 night)
 
 ---
 
@@ -87,6 +87,14 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 
 **Key files this pass:**  
 `src/styles.css`, `src/components/play-shell.tsx`, `src/components/rails.tsx`, `src/components/rail-rule.tsx`, `src/components/peek-save.tsx`, `src/components/cobble-well.tsx`, `src/components/yard-footer.tsx`, `src/routes/me.tsx`, `src/routes/flints.tsx`, `src/routes/games.tsx`, `src/routes/alerts.tsx`, `src/routes/index.tsx`, `src/routes/category.$genre.tsx`, `src/routes/contact.tsx`, `src/lib/letters.ts`
+
+---
+
+## Pass 13 — revert Spec V.1.0 (LIVE)
+**Asked:** The spec dump wrecked the yard. Go back one iteration. Small packets from here.  
+**Shipped:** Restored the pre-spec yard (passes 08–11): monument hero, single rows, 4-color thresholds, Orbitron + toggle under Appendix, Crowds two-carousels, simple You / Alerts / Flints cubicle. Removed nebula overlay, well, Appendix Windows, 16-bit toy, category pages, swipe-to-cycle letter tabs, peek/save modal, footer legal bar, cycling Top Charts lines.  
+**Honest:** Pass 12 remains tagged if we ever want pieces of it. We will not dump a whole architecture packet on the next turn.  
+**Snapshot:** pass-13
 
 ---
 

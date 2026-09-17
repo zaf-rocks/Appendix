@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { PlayShell } from "@/components/play-shell";
 import { FeatureRail, Rail, RankList } from "@/components/rails";
 import { RailRule } from "@/components/rail-rule";
@@ -18,44 +17,6 @@ export const Route = createFileRoute("/games")({
   component: Games,
 });
 
-function MiniMaker() {
-  const [prompt, setPrompt] = useState("");
-  const [out, setOut] = useState<string | null>(null);
-  return (
-    <section className="mb-4 rounded-xl bg-surface p-3 ring-1 ring-border">
-      <h2 className="special-bar">Vibe a 16-bit toy</h2>
-      <p className="mt-1 text-[11px] text-muted">
-        Frogger energy, not Unreal. Describe a tiny arcade. We stub a listing. Remix means anyone can
-        borrow the prompt and ship their own cut. No physics engine this pass.
-      </p>
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder="A frog crosses a neon highway of shopping carts…"
-        className="mt-2 h-16 w-full rounded-md border border-border bg-bg p-2 text-[12px]"
-      />
-      <button
-        type="button"
-        onClick={() => {
-          if (prompt.trim().length < 8) return;
-          const stub = JSON.stringify({ prompt: prompt.trim(), era: "16-bit", openSource: true }, null, 2);
-          try {
-            const prev = JSON.parse(localStorage.getItem("appendix-minigames") || "[]") as unknown[];
-            localStorage.setItem("appendix-minigames", JSON.stringify([{ prompt: prompt.trim(), at: Date.now() }, ...prev].slice(0, 20)));
-          } catch {
-            /* ignore */
-          }
-          setOut(stub);
-        }}
-        className="mt-2 h-8 rounded-full bg-get px-3 text-[12px] font-semibold text-get-fg"
-      >
-        Save prototype prompt
-      </button>
-      {out ? <pre className="mt-2 overflow-auto text-[10px] text-muted">{out}</pre> : null}
-    </section>
-  );
-}
-
 function Games() {
   const catalog = throughLens(Route.useLoaderData(), useLens().lens);
   const { rail = "a" } = Route.useSearch();
@@ -64,7 +25,6 @@ function Games() {
 
   return (
     <PlayShell letters rail={rail} heroTitle="Games" heroLine="No APK. No store clerk. Just a tab that wants to play.">
-      {rail === "a" ? <MiniMaker /> : null}
       {rail === "b" ? (
         <>
           <h2 className="text-[10px] font-medium tracking-wide text-muted uppercase">Top opens</h2>

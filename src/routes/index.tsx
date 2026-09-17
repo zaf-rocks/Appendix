@@ -2,11 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlayShell } from "@/components/play-shell";
 import { FeatureRail, Rail, RankList } from "@/components/rails";
 import { RailRule } from "@/components/rail-rule";
-import { AUDIENCES, GENRE_META, GENRES_ALPHA, type Genre } from "@/lib/catalog";
+import { AUDIENCES, GENRE_META, GENRES, type Genre } from "@/lib/catalog";
 import { listStore } from "@/lib/store-api";
 import { useLens } from "@/lib/lens";
 import { throughLens } from "@/lib/provenance";
-import { CobbleWell } from "@/components/cobble-well";
 import { allOpens } from "@/lib/yard";
 
 type Search = { rail?: string };
@@ -57,13 +56,9 @@ function Home() {
         ))
       ) : rail === "e" ? (
         <ul className="divide-y divide-line">
-          {GENRES_ALPHA.map((g) => (
+          {GENRES.map((g) => (
             <li key={g}>
-              <Link
-                to="/category/$genre"
-                params={{ genre: g }}
-                className="flex items-center justify-between py-2 text-[12px]"
-              >
+              <Link to="/" search={{ rail: "a" }} className="flex items-center justify-between py-2 text-[12px]">
                 {GENRE_META[g].label}
                 <span className="text-[10px] text-muted">{catalog.filter((a) => a.genres.includes(g)).length}</span>
               </Link>
@@ -78,7 +73,7 @@ function Home() {
         </>
       ) : (
         <>
-          <Rail title="Suggested for you" apps={featured.length ? featured : live.slice(0, 16)} special tone="suggested" />
+          <Rail title="Suggested for you" apps={featured.length ? featured : live.slice(0, 16)} special />
           <RailRule i={0} />
           <FeatureRail title="Sponsored" apps={sponsored.length ? sponsored : editors} kind="sponsored" />
           <RailRule i={1} />
@@ -99,7 +94,6 @@ function Home() {
           ))}
         </>
       )}
-      <CobbleWell />
     </PlayShell>
   );
 }

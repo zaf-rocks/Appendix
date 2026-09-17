@@ -1,13 +1,19 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Bell, Bookmark, Coins, Factory, Gamepad2, House, Search, Users, CircleUser } from "lucide-react";
-import { useRef } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { SEED } from "@/lib/catalog";
-import { LETTERS, neighborLetter } from "@/lib/letters";
 import { useLens } from "@/lib/lens";
 import { throughLens } from "@/lib/provenance";
-import { YardFooter } from "@/components/yard-footer";
 import { cn } from "@/lib/cn";
+
+const LETTERS = [
+  { id: "a", label: "Suggested" },
+  { id: "b", label: "Top charts" },
+  { id: "c", label: "Unconventional" },
+  { id: "d", label: "For crowds" },
+  { id: "e", label: "Categories" },
+  { id: "f", label: "Editors' Choice" },
+] as const;
 
 const TABS = [
   { to: "/", label: "Home", icon: House },
@@ -17,15 +23,10 @@ const TABS = [
   { to: "/forge", label: "Forge", icon: Factory },
 ] as const;
 
-function heroFor(path: string, rail?: string) {
-  if (path === "/" && rail && rail !== "a") {
-    const key = rail === "f" ? "a" : rail;
-    return { mp4: `/heroes/home-${key}.mp4`, poster: `/heroes/home-${key}.jpg` };
-  }
+function heroFor(path: string) {
   if (path === "/") return { mp4: "/heroes/home-monument.mp4", poster: "/heroes/home-monument.jpg" };
   if (path === "/games") return { mp4: "/heroes/games.mp4", poster: "/heroes/games.jpg" };
   if (path === "/flints" || path === "/desk") return { mp4: "/heroes/desk.mp4", poster: "/heroes/desk.jpg" };
-  if (path === "/me") return { mp4: "/heroes/home-a.mp4", poster: "/heroes/you-crowd.jpg" };
   if (path === "/people") return { mp4: "/heroes/home-d.mp4", poster: "/heroes/home-d.jpg" };
   if (path === "/find" || path === "/saved" || path === "/forge" || path === "/census")
     return { mp4: "/heroes/home-e.mp4", poster: "/heroes/home-e.jpg" };
@@ -77,9 +78,8 @@ export function PlayShell({
 }) {
   const { user, isPending } = useCurrentUserState();
   const { lens } = useLens();
-  const nav = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const hero = heroFor(path, rail);
+  const hero = heroFor(path);
   const home = path === "/";
   const identOn = ["/me", "/studio", "/beta", "/advertise", "/login"].includes(path);
   const flintsOn = path === "/flints" || path === "/desk";
@@ -87,13 +87,6 @@ export function PlayShell({
   const alertsOn = path === "/alerts";
   const letter = (user?.displayName || user?.primaryEmail || "").trim().charAt(0).toUpperCase();
   const n = throughLens(SEED, lens).length;
-  const swipeX = useRef(0);
-
-  function cycleRail(dir: 1 | -1) {
-    if (!letters) return;
-    const next = neighborLetter(rail, dir);
-    nav({ to: path === "/games" ? "/games" : "/", search: { rail: next } });
-  }
 
   return (
     <div className="min-h-dvh bg-bg text-fg">
@@ -119,7 +112,7 @@ export function PlayShell({
             />
             <div className="w-fit">
               <Link to="/" className="block">
-                <span className="font-mark text-[22px] leading-none tracking-wide text-white [transform:perspective(420px)_rotateX(12deg)] [text-shadow:0_1px_0_#8a7a5a,0_2px_0_#3a3224,0_8px_16px_rgba(0,0,0,0.55)] inline-block">
+                <span className="font-mark inline-block text-[22px] leading-none tracking-wide text-white [transform:perspective(420px)_rotateX(12deg)] [text-shadow:0_1px_0_#8a7a5a,0_2px_0_#3a3224,0_8px_16px_rgba(0,0,0,0.55)]">
                   Appendix
                 </span>
               </Link>
@@ -159,7 +152,7 @@ export function PlayShell({
             </Link>
             <Link
               to="/me"
-              className={cn("grid size-[3.35rem] place-items-center overflow-hidden rounded-full p-[2px]", "ident-ring")}
+              className={cn("ident-ring grid size-[3.35rem] place-items-center overflow-hidden rounded-full p-[2px]")}
               aria-label="Identity"
             >
               <span
@@ -192,7 +185,10 @@ export function PlayShell({
           {n.toLocaleString()} {lens === "vibe" ? "Vibe Apps" : "All Apps"}
         </p>
       </div>
-      <div className={rail === "b" ? "cycle-ccw mx-3" : "mx-3 h-[2px] rounded-full"} style={rail === "b" ? undefined : { backgroundImage: "linear-gradient(90deg,#ff8ab4,#ff2d55,#ff7a00,#ffd60a)" }} />
+      <div
+        className="mx-3 h-[2px] rounded-full"
+        style={{ backgroundImage: "linear-gradient(90deg,#ff8ab4,#ff2d55,#ff7a00,#ffd60a)" }}
+      />
 
       {letters ? (
         <div className="flex gap-1 overflow-x-auto px-2 py-1.5">
@@ -202,8 +198,8 @@ export function PlayShell({
               to={path === "/games" ? "/games" : "/"}
               search={{ rail: l.id }}
               className={cn(
-                "chip-lens h-6 shrink-0 rounded-full px-2.5 text-[10px] leading-6 whitespace-nowrap",
-                (rail || "a") === l.id ? "chip-lens-on" : "text-muted",
+                "h-6 shrink-0 rounded-full px-2.5 text-[10px] leading-6 whitespace-nowrap",
+                (rail || "a") === l.id ? "bg-fg text-bg" : "bg-raised text-muted",
               )}
             >
               {l.label}
@@ -211,21 +207,14 @@ export function PlayShell({
           ))}
         </div>
       ) : null}
-      {letters ? <div className={rail === "b" ? "cycle-cw mx-3 mb-1" : "mx-3 mb-1 h-[2px] rounded-full"} style={rail === "b" ? undefined : { backgroundImage: "linear-gradient(90deg,#32ade6,#5856d6,#af52de,#ff2d78)" }} /> : null}
+      {letters ? (
+        <div
+          className="mx-3 mb-1 h-[2px] rounded-full"
+          style={{ backgroundImage: "linear-gradient(90deg,#32ade6,#5856d6,#af52de,#ff2d78)" }}
+        />
+      ) : null}
 
-      <main
-        className="px-3 pt-2 pb-24"
-        onTouchStart={(e) => {
-          swipeX.current = e.touches[0].clientX;
-        }}
-        onTouchEnd={(e) => {
-          const dx = e.changedTouches[0].clientX - swipeX.current;
-          if (Math.abs(dx) > 70) cycleRail(dx < 0 ? 1 : -1);
-        }}
-      >
-        {children}
-        <YardFooter />
-      </main>
+      <main className="px-3 pt-2 pb-24">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/95 backdrop-blur">
         <div className="mx-auto grid w-full max-w-3xl grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
@@ -238,12 +227,7 @@ export function PlayShell({
                 to={t.to}
                 className={cn("flex flex-col items-center gap-1 py-3 text-[11px]", on ? "text-fg" : "text-muted")}
               >
-                <span
-                  className={cn(
-                    "grid size-11 place-items-center rounded-2xl",
-                    on ? "ident-ring p-[2px]" : "bg-raised",
-                  )}
-                >
+                <span className={cn("grid size-11 place-items-center rounded-2xl", on ? "ident-ring p-[2px]" : "bg-raised")}>
                   <span className={cn("grid size-full place-items-center rounded-[14px]", on ? "bg-bg" : "")}>
                     <Icon className="size-5" />
                   </span>
