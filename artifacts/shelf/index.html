@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0c10"/>
+<meta name="description" content="Shelf — discovery for installable web apps. Built for the vibe-coding era."/>
+<link rel="manifest" href="/manifest.webmanifest"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>Shelf · Installable Web Apps</title>
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Shelf" />
+<meta property="og:title" content="Shelf · Installable Web Apps" />
+<meta property="og:description" content="Opinionated discovery for progressive web apps and vibe-coded tools." />
+<meta property="og:image" content="/og.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:type" content="image/jpeg" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Shelf · Installable Web Apps" />
+<meta name="twitter:description" content="Opinionated discovery for progressive web apps and vibe-coded tools." />
+<meta name="twitter:image" content="/og.jpg" />
+<meta property="x:game:image" content="/x-banner.jpg" />
+<script>
+(function () {
+  try {
+    var host = window.location && window.location.host;
+    if (!host) return;
+    var origin = window.location.protocol + '//' + host;
+    var og = origin + '/og.jpg';
+    var xBanner = origin + '/x-banner.jpg';
+    function setProp(attr, key, val) {
+      var el = document.querySelector('meta[' + attr + '="' + key + '"]');
+      if (el) el.setAttribute('content', val);
+    }
+    setProp('property', 'og:image', og);
+    setProp('name', 'twitter:image', og);
+    setProp('property', 'x:game:image', xBanner);
+  } catch (e) {}
+})();
+</script>
+<style>
+:root{--bg-0:#07090c;--bg-1:#0c1016;--surface:#121820;--surface-2:#1a222e;--border:#243041;--text:#e8eef6;--muted:#8b9bb0;--accent:#59c3ff;--match:#73f5a7;--warn:#ffb020;--violet:#a98bff;--radius:14px;--font:system-ui,-apple-system,Segoe UI,sans-serif;--mono:ui-monospace,SF Mono,Menlo,monospace}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg-0);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(1200px 600px at 10% -10%,rgba(89,195,255,.08),transparent 55%),radial-gradient(900px 500px at 90% 0%,rgba(169,139,255,.07),transparent 50%),var(--bg-0)}
+button,input,textarea{font:inherit;color:inherit}a{color:var(--accent);text-decoration:none}
+.app-shell{max-width:1100px;margin:0 auto;padding:1rem 1rem 5.5rem}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1rem;margin-bottom:1.25rem;padding-top:.5rem}
+.brand{display:flex;align-items:center;gap:.65rem}
+.brand-mark{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);display:grid;place-items:center;background:#0a0c10}
+.brand-mark img{width:22px;height:22px}
+.brand h1{margin:0;font-size:1.15rem;letter-spacing:-.02em}
+.brand p{margin:0;font-size:.72rem;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.top-actions{margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap}
+.btn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:.55rem .95rem;cursor:pointer;font-size:.85rem;font-weight:600}
+.btn:hover{border-color:#3a4d66;background:var(--surface-2)}
+.btn-primary{background:linear-gradient(180deg,#6ad0ff,#3aa8e0);color:#041018;border-color:transparent}
+.btn-ghost{background:transparent}
+.search-row{display:grid;gap:.75rem;margin-bottom:1rem}
+@media(min-width:720px){.search-row{grid-template-columns:1fr auto;align-items:center}}
+.search-box{display:flex;align-items:center;gap:.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.65rem .9rem}
+.search-box input{flex:1;border:none;background:transparent;outline:none;font-size:.95rem}
+.search-box input::placeholder{color:var(--muted)}
+.stats{font-size:.8rem;color:var(--muted);white-space:nowrap}
+.genre-rail{display:flex;gap:.45rem;overflow-x:auto;padding-bottom:.35rem;margin-bottom:1.1rem}
+.chip{flex:0 0 auto;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:999px;padding:.4rem .75rem;font-size:.78rem;font-weight:600;cursor:pointer}
+.chip.active{color:var(--text);border-color:color-mix(in srgb,var(--chip,var(--accent)) 55%,var(--border));background:color-mix(in srgb,var(--chip,var(--accent)) 16%,var(--surface))}
+.section-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 .65rem}
+.grid{display:grid;gap:.75rem;grid-template-columns:1fr}
+@media(min-width:560px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{background:linear-gradient(165deg,var(--surface-2),var(--surface));border:1px solid var(--border);border-radius:var(--radius);padding:1rem;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:.55rem;min-height:150px}
+.card:hover{border-color:#3a4d66}
+.card-top{display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start}
+.card h3{margin:0;font-size:1rem}
+.card p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.4;flex:1}
+.badges{display:flex;flex-wrap:wrap;gap:.3rem}
+.badge{font-size:.65rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:.2rem .45rem;border-radius:6px;background:var(--bg-1);border:1px solid var(--border);color:var(--muted)}
+.badge.hot{color:#041018;background:var(--warn);border-color:transparent}
+.badge.ai{color:#1a0f30;background:var(--violet);border-color:transparent}
+.badge.off{color:#062016;background:var(--match);border-color:transparent}
+.card-foot{display:flex;justify-content:space-between;gap:.5rem;margin-top:.15rem}
+.card-foot span{font-size:.72rem;color:var(--muted);font-family:var(--mono)}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius)}
+.dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(.75rem + env(safe-area-inset-bottom));width:min(420px,calc(100% - 1.5rem));background:rgba(12,16,22,.92);backdrop-filter:blur(14px);border:1px solid var(--border);border-radius:999px;display:grid;grid-template-columns:repeat(3,1fr);padding:.35rem;z-index:40}
+.dock button{border:none;background:transparent;color:var(--muted);padding:.55rem .4rem;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;cursor:pointer}
+.dock button.active{background:var(--surface-2);color:var(--text)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:.75rem}
+@media(min-width:700px){.overlay{align-items:center}}
+.sheet{width:min(520px,100%);max-height:min(88vh,720px);overflow:auto;background:var(--bg-1);border:1px solid var(--border);border-radius:18px;padding:1.15rem}
+.sheet header{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start;margin-bottom:.85rem}
+.sheet h2{margin:0;font-size:1.25rem}
+.sheet .close{border:none;background:var(--surface);border-radius:999px;width:36px;height:36px;cursor:pointer;color:var(--muted);font-size:1.1rem}
+.field{display:grid;gap:.35rem;margin-bottom:.85rem}
+.field label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.field input,.field textarea{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.65rem .75rem;outline:none}
+.field textarea{min-height:88px;resize:vertical}
+.genre-pick{display:flex;flex-wrap:wrap;gap:.4rem}
+.hero-blurb{background:linear-gradient(135deg,rgba(89,195,255,.08),rgba(169,139,255,.08));border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;margin-bottom:1.1rem}
+.hero-blurb h2{margin:0 0 .35rem;font-size:1.05rem}
+.hero-blurb p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.45}
+.install-hint{font-size:.8rem;color:var(--muted);margin-top:.75rem;line-height:1.4}
+.toast{position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:var(--match);color:#062016;font-weight:700;font-size:.85rem;padding:.55rem 1rem;border-radius:999px;z-index:60}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app-shell" id="app"></div>
+<script>
+const GENRE_META = {
+  microtool:{label:'Microtool',hint:'One job. Done well.',color:'#59C3FF'},
+  'vibe-coded':{label:'Vibe-coded',hint:'AI-assisted builds',color:'#A98BFF'},
+  creator:{label:'Creator',hint:'Performance & media',color:'#FFB020'},
+  'local-first':{label:'Local-first',hint:'Your data stays put',color:'#73F5A7'},
+  offline:{label:'Offline',hint:'Works without network',color:'#7dd3c0'},
+  identity:{label:'Identity',hint:'Names, glyphs, presence',color:'#FF6B9D'},
+  spatial:{label:'Spatial',hint:'Attention has shape',color:'#c4b5fd'},
+  utility:{label:'Utility',hint:'Daily friction killers',color:'#94a3b8'},
+  experiment:{label:'Experiment',hint:'Prototypes & weird',color:'#fb923c'},
+  audio:{label:'Audio',hint:'Sound & karaoke',color:'#f472b6'},
+  commerce:{label:'Commerce',hint:'Sell without the circus',color:'#34d399'},
+};
+const GENRES = Object.keys(GENRE_META);
+const SEED = [
+  {id:'pwa-directory',name:'PWA Directory',tagline:'Evidence-checked installable web apps. Offline flags you can trust.',url:'https://pwa.directory/',genres:['utility','offline'],offline:true,installable:true,source:'Public'},
+  {id:'drawio',name:'draw.io',tagline:'Diagrams that survive airplane mode.',url:'https://app.diagrams.net/',genres:['utility','offline','local-first'],offline:true,installable:true,source:'Public'},
+  {id:'excalidraw',name:'Excalidraw',tagline:'Hand-drawn feel. Collaborative whiteboard as a PWA.',url:'https://excalidraw.com/',genres:['utility','creator','local-first'],installable:true,source:'Public'},
+  {id:'photopea',name:'Photopea',tagline:'Photoshop-class editor in the browser. No install tax.',url:'https://www.photopea.com/',genres:['creator','utility'],installable:true,source:'Public'},
+  {id:'squoosh',name:'Squoosh',tagline:'Compress images without shipping them to a stranger’s server.',url:'https://squoosh.app/',genres:['microtool','utility','local-first'],offline:true,installable:true,source:'Public'},
+  {id:'svgomg',name:'SVGOMG',tagline:'SVG optimization with live preview. Designer microtool.',url:'https://jakearchibald.github.io/svgomg/',genres:['microtool','creator'],installable:true,source:'Public'},
+  {id:'appbird',name:'appBird',tagline:'Catalog aimed at AI-built web apps and lite tools.',url:'https://appbird.store/',genres:['vibe-coded','utility'],installable:true,aiBuilt:true,source:'Public'},
+  {id:'literalizer',name:'The Literalizer',tagline:'Paste jargon. Get deadpan human language. Landmines included.',url:'#',genres:['microtool','vibe-coded','utility'],aiBuilt:true,featured:true,source:'ZAF concept'},
+  {id:'identity-studioz',name:'Identity StudioZ',tagline:'Unicode stage names, glyphs, compatibility scores. Deterministic flair.',url:'#',genres:['identity','microtool','vibe-coded'],aiBuilt:true,featured:true,source:'ZAF concept'},
+  {id:'preset-irl',name:'PRESET//IRL',tagline:'Save presets for things that do not have a Save button.',url:'#',genres:['creator','audio','utility','local-first'],featured:true,source:'ZAF concept'},
+  {id:'noteworthy',name:'Noteworthy',tagline:'Attention has shape. Spatial field for thoughts that refuse a list.',url:'#',genres:['spatial','local-first','experiment'],aiBuilt:true,featured:true,source:'ZAF concept'},
+  {id:'karaokedokie',name:'KaraokeDokie',tagline:'Song title in. Performance package out. Visual-first.',url:'#',genres:['creator','audio','vibe-coded'],aiBuilt:true,featured:true,source:'ZAF concept'},
+  {id:'mic-chain',name:'Mic Chain Snapshot',tagline:'Photograph the vocal chain. Restore it later without guessing knobs.',url:'#',genres:['audio','microtool','creator'],source:'ZAF concept'},
+  {id:'wedding-cam',name:'Wedding Disposable Camera',tagline:'Event code. Guest photos. Delayed reveal album.',url:'#',genres:['utility','commerce','experiment'],source:'ZAF concept'},
+  {id:'last-place',name:'Last Place',tagline:'Photo where you left it. Search when your brain fails you.',url:'#',genres:['microtool','local-first','utility'],source:'Opportunity dossier'},
+  {id:'did-i-lock',name:'Did I Lock It?',tagline:'One tap. Timestamp. Stop reopening the mental loop.',url:'#',genres:['microtool','local-first'],source:'Opportunity dossier'},
+  {id:'tech-rider',name:'Tech Rider Builder',tagline:'Venue-ready riders from saved gear profiles.',url:'#',genres:['creator','audio','utility'],source:'Opportunity dossier'},
+  {id:'duet-key',name:'Duet Key Note',tagline:'Preferred key and part for every pairing. Stop the pre-song argument.',url:'#',genres:['audio','microtool','creator'],source:'Opportunity dossier'},
+  {id:'shelf-self',name:'Shelf',tagline:'This catalog. Installable. Dogfooding required.',url:'/',genres:['vibe-coded','utility','experiment'],installable:true,aiBuilt:true,featured:true,source:'ZAF / this build'},
+];
+
+const QUEUE_KEY='shelf-submit-queue', CUSTOM_KEY='shelf-custom-apps';
+function loadJson(k,f){try{const r=localStorage.getItem(k);return r?JSON.parse(r):f}catch{return f}}
+function saveJson(k,v){localStorage.setItem(k,JSON.stringify(v))}
+
+let state={tab:'browse',query:'',genre:'all',selected:null,toast:null,custom:loadJson(CUSTOM_KEY,[]),name:'',tagline:'',url:'',formGenres:['microtool'],deferred:null};
+
+function catalog(){const m=new Map();[...SEED,...state.custom].forEach(a=>m.set(a.id,a));return [...m.values()]}
+function filtered(){
+  const q=state.query.trim().toLowerCase();
+  return catalog().filter(a=>{
+    if(state.genre!=='all'&&!a.genres.includes(state.genre))return false;
+    if(!q)return true;
+    return a.name.toLowerCase().includes(q)||a.tagline.toLowerCase().includes(q)||a.genres.some(g=>GENRE_META[g].label.toLowerCase().includes(q))||(a.source||'').toLowerCase().includes(q);
+  }).sort((a,b)=>Number(!!b.featured)-Number(!!a.featured)||a.name.localeCompare(b.name));
+}
+
+function toast(msg){state.toast=msg;render();setTimeout(()=>{state.toast=null;render()},2200)}
+
+function render(){
+  const app=document.getElementById('app');
+  const list=filtered();
+  const cat=catalog();
+  let body='';
+
+  if(state.tab==='browse'){
+    body=`
+    <div class="hero-blurb"><h2>Not another generic app directory.</h2>
+    <p>Taxonomy for the vibe-coding flood: microtools, local-first, spatial interfaces, creator gear, experiments. Browse, filter, submit. Install this catalog itself.</p></div>
+    <div class="search-row"><div class="search-box"><span>⌕</span>
+    <input id="q" value="${escapeAttr(state.query)}" placeholder="Search name, genre, source…" aria-label="Search"/></div>
+    <div class="stats">${list.length} of ${cat.length} apps</div></div>
+    <div class="genre-rail" id="genres">
+      <button type="button" class="chip ${state.genre==='all'?'active':''}" data-g="all">All</button>
+      ${GENRES.map(g=>`<button type="button" class="chip ${state.genre===g?'active':''}" data-g="${g}" style="--chip:${GENRE_META[g].color}" title="${GENRE_META[g].hint}">${GENRE_META[g].label}</button>`).join('')}
+    </div>
+    ${state.genre!=='all'?`<p class="section-label">${GENRE_META[state.genre].label} · ${GENRE_META[state.genre].hint}</p>`:''}
+    ${list.length===0?'<div class="empty">Nothing matches. Try another genre or clear search.</div>':
+    `<div class="grid">${list.map(a=>`
+      <button type="button" class="card" data-id="${a.id}">
+        <div class="card-top"><h3>${escapeHtml(a.name)}</h3>
+        <div class="badges">${a.featured?'<span class="badge hot">Featured</span>':''}${a.aiBuilt?'<span class="badge ai">AI-built</span>':''}${a.offline?'<span class="badge off">Offline</span>':''}</div></div>
+        <p>${escapeHtml(a.tagline)}</p>
+        <div class="card-foot"><span>${a.genres.map(g=>GENRE_META[g].label).join(' · ')}</span><span>${escapeHtml(a.source||'—')}</span></div>
+      </button>`).join('')}</div>`}
+    `;
+  } else if(state.tab==='submit'){
+    body=`
+    <form class="sheet" id="submit-form" style="width:100%;max-width:560px;margin:0 auto">
+      <h2 style="margin-top:0">Submit a PWA</h2>
+      <p style="color:var(--muted);font-size:.9rem;margin-top:0">Stored locally on this device and queued for a future public review pass. No account.</p>
+      <div class="field"><label for="name">Name</label><input id="name" value="${escapeAttr(state.name)}" placeholder="App name" required/></div>
+      <div class="field"><label for="tagline">Tagline</label><textarea id="tagline" required placeholder="One line that explains why it exists">${escapeHtml(state.tagline)}</textarea></div>
+      <div class="field"><label for="url">URL (optional for concepts)</label><input id="url" value="${escapeAttr(state.url)}" placeholder="https://…"/></div>
+      <div class="field"><label>Genres</label><div class="genre-pick" id="form-genres">
+        ${GENRES.map(g=>`<button type="button" class="chip ${state.formGenres.includes(g)?'active':''}" data-fg="${g}" style="--chip:${GENRE_META[g].color}">${GENRE_META[g].label}</button>`).join('')}
+      </div></div>
+      <button class="btn btn-primary" type="submit" style="width:100%">Add to Shelf</button>
+    </form>`;
+  } else {
+    body=`
+    <div class="hero-blurb">
+      <h2>Why Shelf exists</h2>
+      <p style="margin-bottom:.75rem">Generic PWA directories already exist. None of them is the Play Store of the web — and that is fine. Shelf is an opinionated lane for the wave of AI-built and solo-dev installable apps: classification first, volume second.</p>
+      <p style="margin-bottom:.75rem">Genres are the product: microtool, vibe-coded, local-first, spatial, creator, experiment — not a recycled Business / Games dump.</p>
+      <p>This build is the light wrap: browse, filter, local submit queue, installable.</p>
+      <p class="install-hint">Chrome/Edge: menu → Install app. iOS Safari: Share → Add to Home Screen.</p>
+    </div>`;
+  }
+
+  const modal = state.selected ? `
+  <div class="overlay" id="overlay">
+    <div class="sheet" role="dialog" aria-modal="true">
+      <header>
+        <div>
+          <h2>${escapeHtml(state.selected.name)}</h2>
+          <div class="badges" style="margin-top:.45rem">
+            ${state.selected.featured?'<span class="badge hot">Featured</span>':''}
+            ${state.selected.aiBuilt?'<span class="badge ai">AI-built</span>':''}
+            ${state.selected.offline?'<span class="badge off">Offline</span>':''}
+            ${state.selected.installable?'<span class="badge">Installable</span>':''}
+          </div>
+        </div>
+        <button type="button" class="close" id="close-modal">×</button>
+      </header>
+      <p style="color:var(--muted);line-height:1.45">${escapeHtml(state.selected.tagline)}</p>
+      <p style="font-size:.8rem;color:var(--muted)">${state.selected.genres.map(g=>GENRE_META[g].label).join(' · ')}${state.selected.source?' · '+escapeHtml(state.selected.source):''}</p>
+      <div style="display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap">
+        ${state.selected.url && state.selected.url!=='#' ? `<a class="btn btn-primary" href="${escapeAttr(state.selected.url)}" target="_blank" rel="noreferrer">Open app</a>` : `<button class="btn" type="button" disabled>Concept — no live URL yet</button>`}
+        <button class="btn" type="button" id="close-modal-2">Close</button>
+      </div>
+    </div>
+  </div>` : '';
+
+  app.innerHTML = `
+    ${state.toast?`<div class="toast">${escapeHtml(state.toast)}</div>`:''}
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark"><img src="/favicon.svg" alt=""/></div>
+      <div><h1>Shelf</h1><p>Installable web</p></div></div>
+      <div class="top-actions">
+        <button class="btn btn-ghost" type="button" id="install-btn">Install Shelf</button>
+        <button class="btn btn-primary" type="button" data-tab="submit">Submit</button>
+      </div>
+    </header>
+    ${body}
+    <nav class="dock">
+      <button type="button" class="${state.tab==='browse'?'active':''}" data-tab="browse">Browse</button>
+      <button type="button" class="${state.tab==='submit'?'active':''}" data-tab="submit">Submit</button>
+      <button type="button" class="${state.tab==='about'?'active':''}" data-tab="about">About</button>
+    </nav>
+    ${modal}
+  `;
+
+  // bindings
+  app.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{state.tab=el.getAttribute('data-tab');render()}));
+  const q=document.getElementById('q');
+  if(q){q.addEventListener('input',e=>{state.query=e.target.value;render();const nq=document.getElementById('q');if(nq){nq.focus();nq.setSelectionRange(nq.value.length,nq.value.length)}})}
+  app.querySelectorAll('[data-g]').forEach(el=>el.addEventListener('click',()=>{state.genre=el.getAttribute('data-g');render()}));
+  app.querySelectorAll('.card[data-id]').forEach(el=>el.addEventListener('click',()=>{state.selected=cat.find(a=>a.id===el.getAttribute('data-id'))||null;render()}));
+  const close=()=>{state.selected=null;render()};
+  const c1=document.getElementById('close-modal'); if(c1)c1.onclick=close;
+  const c2=document.getElementById('close-modal-2'); if(c2)c2.onclick=close;
+  const ov=document.getElementById('overlay'); if(ov)ov.addEventListener('click',e=>{if(e.target===ov)close()});
+  const inst=document.getElementById('install-btn');
+  if(inst)inst.onclick=async()=>{
+    if(state.deferred){state.deferred.prompt();await state.deferred.userChoice;state.deferred=null;toast('Install prompt sent')}
+    else toast('Use browser menu → Install / Add to Home Screen');
+  };
+  const form=document.getElementById('submit-form');
+  if(form){
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const name=document.getElementById('name').value.trim();
+      const tagline=document.getElementById('tagline').value.trim();
+      const url=document.getElementById('url').value.trim();
+      if(!name||!tagline){toast('Name and tagline required');return}
+      const entry={id:'local-'+Date.now(),name,tagline,url:url||'#',genres:[...state.formGenres],aiBuilt:true,source:'Community submit'};
+      state.custom=[entry,...state.custom];
+      saveJson(CUSTOM_KEY,state.custom);
+      saveJson(QUEUE_KEY,[entry,...loadJson(QUEUE_KEY,[])]);
+      state.name='';state.tagline='';state.url='';state.formGenres=['microtool'];
+      state.tab='browse';
+      toast('Added to your Shelf + submit queue');
+      render();
+    });
+    app.querySelectorAll('[data-fg]').forEach(el=>el.addEventListener('click',()=>{
+      const g=el.getAttribute('data-fg');
+      if(state.formGenres.includes(g)){if(state.formGenres.length>1)state.formGenres=state.formGenres.filter(x=>x!==g)}
+      else state.formGenres=[...state.formGenres,g];
+      // preserve form field values
+      state.name=document.getElementById('name').value;
+      state.tagline=document.getElementById('tagline').value;
+      state.url=document.getElementById('url').value;
+      render();
+    }));
+  }
+}
+
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function escapeAttr(s){return escapeHtml(s).replace(/`/g,'')}
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.deferred=e});
+render();
+</script>
+</body>
+</html>

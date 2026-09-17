@@ -1,0 +1,325 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #101214;
+  --color-surface: #181b1e;
+  --color-raised: #22262b;
+  --color-fg: #e8eaed;
+  --color-muted: #9aa0a6;
+  --color-subtle: #6d737a;
+  --color-primary: #8ab4f8;
+  --color-primary-fg: #0b1220;
+  --color-get: #81c995;
+  --color-get-fg: #0c1a10;
+  --color-down: #f28b82;
+  --color-soon: #f5c542;
+  --color-border: #2d3136;
+  --color-line: #262a2e;
+  --color-gold: #d4af37;
+  --color-rosegold: #b76e79;
+  --color-cat-sky: #5f8dd3;
+  --color-cat-mint: #3d9a78;
+  --color-cat-coral: #c97a4a;
+  --color-cat-rose: #b56b8a;
+  --color-cat-teal: #3d8f8a;
+  --color-cat-amber: #c4a35a;
+  --color-cat-indigo: #7b82c4;
+  --color-cat-slate: #6b7280;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --font-display: "Orbitron", "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mark: "Orbitron", "IBM Plex Sans", sans-serif;
+  --text-micro: 0.5625rem;
+  --text-tiny: 0.625rem;
+}
+
+@utility font-mark {
+  font-family: var(--font-mark);
+}
+
+html[data-theme="light"] {
+  --color-bg: #f8f9fa;
+  --color-surface: #ffffff;
+  --color-raised: #eef0f2;
+  --color-fg: #202124;
+  --color-muted: #5f6368;
+  --color-subtle: #80868b;
+  --color-primary: #1a73e8;
+  --color-primary-fg: #ffffff;
+  --color-get: #188038;
+  --color-get-fg: #ffffff;
+  --color-down: #d93025;
+  --color-border: #dadce0;
+  --color-line: #e8eaed;
+}
+
+html[data-lens="all"] {
+  --color-bg: #0a0908;
+  --color-surface: #14110e;
+  --color-raised: #1c1814;
+  --color-fg: #f3e6c8;
+  --color-muted: #b7a48a;
+  --color-subtle: #7a6a56;
+  --color-primary: #d4af37;
+  --color-primary-fg: #1a1208;
+  --color-get: #d4af37;
+  --color-get-fg: #1a1208;
+  --color-border: #3a3126;
+  --color-line: #2a241c;
+}
+
+html[data-lens="vibe"] {
+  --color-bg: #000000;
+  --color-surface: #0b0612;
+  --color-raised: #140a1c;
+  --color-fg: #f6ecff;
+  --color-muted: #c9b4e0;
+  --color-subtle: #7a668f;
+  --color-primary: #e8c547;
+  --color-primary-fg: #140c00;
+  --color-get: #d4af37;
+  --color-get-fg: #140c00;
+  --color-border: #3a2458;
+  --color-line: #221430;
+}
+
+html[data-lens="vibe"] body {
+  background:
+    radial-gradient(ellipse at 12% -10%, rgba(168, 70, 255, 0.35), transparent 42%),
+    radial-gradient(ellipse at 90% 8%, rgba(212, 175, 55, 0.18), transparent 38%),
+    radial-gradient(ellipse at 50% 120%, rgba(40, 10, 80, 0.55), transparent 50%),
+    #000;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100%;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-size: 11.5px;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  * {
+    border-color: var(--color-border);
+  }
+}
+
+.vibe-grad {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    #ffd0e6 3%,
+    #ff2d78 16%,
+    #ff3b30 28%,
+    #ff7a00 40%,
+    #ffd400 52%,
+    #34c759 64%,
+    #00c2ff 76%,
+    #5856d6 88%,
+    #c44dff 100%
+  );
+}
+
+.all-grad {
+  background-image: linear-gradient(90deg, #1a1208 0%, #6b4a2a 28%, #b76e79 55%, #d4af37 82%, #f3e5ab 100%);
+}
+
+html[data-lens="all"] .vibe-grad {
+  background-image: linear-gradient(90deg, #1a1208 0%, #6b4a2a 28%, #b76e79 55%, #d4af37 82%, #f3e5ab 100%);
+}
+
+.chip-lens {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-raised), var(--color-raised)) padding-box,
+    linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.7),
+        #ff2d78,
+        #ff7a00,
+        #ffd400,
+        #34c759,
+        #00c2ff,
+        #5856d6,
+        #c44dff
+      )
+      border-box;
+}
+
+html[data-lens="all"] .chip-lens {
+  background:
+    linear-gradient(var(--color-raised), var(--color-raised)) padding-box,
+    linear-gradient(90deg, #6a4a3a, #a85a62) border-box;
+}
+
+html[data-lens="vibe"] .chip-lens {
+  background:
+    linear-gradient(var(--color-raised), var(--color-raised)) padding-box,
+    linear-gradient(90deg, #d4af37, #7b3fa8, #5b2d8a) border-box;
+}
+
+.chip-lens-on {
+  color: var(--color-bg);
+  background:
+    linear-gradient(var(--color-fg), var(--color-fg)) padding-box,
+    linear-gradient(90deg, #fff, #ff2d78, #ff7a00, #ffd400, #34c759, #00c2ff, #5856d6, #c44dff) border-box;
+}
+
+html[data-lens="all"] .chip-lens-on {
+  color: #1a1208;
+  background:
+    linear-gradient(#d4af37, #f3e5ab) padding-box,
+    linear-gradient(90deg, #1a1208, #b76e79, #d4af37) border-box;
+}
+
+html[data-lens="vibe"] .chip-lens-on {
+  color: #140c00;
+  background:
+    linear-gradient(#e8c547, #d4af37) padding-box,
+    linear-gradient(90deg, #d4af37, #7b3fa8) border-box;
+}
+
+.special-bar {
+  position: relative;
+  padding: 5px 2px 4px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: perspective(320px) rotateX(8deg);
+  transform-origin: left center;
+}
+
+.special-bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background-image: linear-gradient(90deg, #d4af37, #7b3fa8, #c44dff, #d4af37);
+}
+
+html[data-lens="all"] .special-bar::after {
+  background-image: linear-gradient(90deg, #6b5a50, #8a7060);
+}
+html[data-lens="all"] .tone-suggested::after {
+  background-image: linear-gradient(90deg, #c9a0a8, #a85a62);
+}
+html[data-lens="all"] .tone-editors::after {
+  background-image: linear-gradient(90deg, #1d2a4a, #3b3d7a);
+}
+html[data-lens="all"] .tone-sponsored::after {
+  background-image: linear-gradient(90deg, #6b5a40, #8a7350);
+}
+
+.gold-sheen {
+  background-size: 200% 100%;
+  animation: sheen 7s linear infinite;
+}
+
+@keyframes sheen {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+.ident-ring {
+  background: conic-gradient(from 180deg, #ff2d78, #ff3b30, #ff7a00, #ffd400, #34c759, #00c2ff, #5856d6, #c44dff, #ff2d78);
+}
+
+html[data-lens="all"] .ident-ring {
+  background: conic-gradient(from 180deg, #1a1208, #6b4a2a, #b76e79, #d4af37, #f3e5ab, #b76e79, #1a1208);
+}
+
+html[data-lens="vibe"] .ident-ring {
+  background: conic-gradient(from 180deg, #d4af37, #7b3fa8, #5b2d8a, #e8c547, #d4af37);
+}
+
+.hero-tag {
+  font-family: var(--font-display);
+  font-size: clamp(9px, 2.6vw, 12px);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+}
+
+.cycle-ccw,
+.cycle-cw {
+  height: 2px;
+  border-radius: 999px;
+  background-size: 300% 100%;
+}
+.cycle-ccw {
+  background-image: linear-gradient(90deg, #ff8ab4, #ff2d55, #ff7a00, #ffd60a, #ff8ab4);
+  animation: cycle-shift 14s linear infinite;
+}
+.cycle-cw {
+  background-image: linear-gradient(90deg, #32ade6, #5856d6, #af52de, #ff2d78, #32ade6);
+  animation: cycle-shift 14s linear infinite reverse;
+}
+@keyframes cycle-shift {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+
+.sign-out-3 {
+  background-image: linear-gradient(90deg, #ff2d55, #af52de, #32ade6);
+  color: #fff;
+}
+
+.folder-clip {
+  position: relative;
+}
+.folder-clip::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  width: 14px;
+  height: 22px;
+  border: 2px solid #c0c4c8;
+  border-radius: 6px 6px 4px 4px;
+  box-shadow: inset 0 0 0 1px #8a9096;
+}
+
+.well-shaft {
+  background-image: url("/heroes/well-tile.jpg");
+  background-size: 360px 360px;
+  background-repeat: repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
