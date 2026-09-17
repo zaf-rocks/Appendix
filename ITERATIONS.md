@@ -4,7 +4,7 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 
 **How to go back:** say the pass number (or a named beat: “single rows,” “monument hero,” “pre-well”). This file is the map. Snapshots live in git tags `pass-NN` when a pass is closed.
 
-**Current live pass:** **13 — revert Spec V.1.0** (2026-09-16 night)
+**Current live pass:** **14 — aisle type + original thresholds** (2026-09-17)
 
 ---
 
@@ -95,6 +95,13 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 **Shipped:** Restored the pre-spec yard (passes 08–11): monument hero, single rows, 4-color thresholds, Orbitron + toggle under Appendix, Crowds two-carousels, simple You / Alerts / Flints cubicle. Removed nebula overlay, well, Appendix Windows, 16-bit toy, category pages, swipe-to-cycle letter tabs, peek/save modal, footer legal bar, cycling Top Charts lines.  
 **Honest:** Pass 12 remains tagged if we ever want pieces of it. We will not dump a whole architecture packet on the next turn.  
 **Snapshot:** pass-13
+
+---
+
+## Pass 14 — aisle type + original thresholds (LIVE)
+**Asked:** Category titles (Games, Productivity, …) should match Editors’ Choice / Sponsored type. Restore original threshold: super-thin hairline, 4-color bar, super-thin hairline. One between each aisle, bands alternating down the page.  
+**Shipped:** Every rail title uses `special-bar` (Orbitron, same size as Sponsored/Editors). `RailRule` is hairline / 2px four-color / hairline. Four bands cycle.  
+**Snapshot:** pass-14
 
 ---
 

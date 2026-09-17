@@ -42,15 +42,15 @@ function Home() {
         <>
           <p className="text-[11px] text-muted">The aisle a native store would call a rounding error.</p>
           <Rail title="AI-built & soon" apps={odd} />
-          <RailRule />
+          <RailRule i={0} />
           <Rail title="Editors kept anyway" apps={editors} special />
-          <RailRule />
+          <RailRule i={1} />
           <Rail title="Weird on purpose" apps={catalog.filter((a) => ["webamp", "radio-garden", "hextris", "krunker", "scratch", "regex101"].includes(a.id))} />
         </>
       ) : rail === "d" ? (
         AUDIENCES.map((aud, i) => (
           <div key={aud.id}>
-            {i ? <RailRule /> : null}
+            {i ? <RailRule i={i} /> : null}
             <Rail title={aud.label} apps={catalog.filter((a) => a.genres.some((g) => aud.match.includes(g)))} />
           </div>
         ))
@@ -68,7 +68,7 @@ function Home() {
       ) : rail === "f" ? (
         <>
           <FeatureRail title="Editors' Choice" apps={editors} kind="editors" />
-          <RailRule />
+          <RailRule i={0} />
           <Rail title="Featured" apps={featured} />
         </>
       ) : (

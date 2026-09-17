@@ -34,11 +34,7 @@ export function Rail({
   const bands = splitRows(shown, rows);
   return (
     <section>
-      {special ? (
-        <h2 className="special-bar">{title}</h2>
-      ) : (
-        <h2 className="text-[10px] font-medium tracking-wide text-muted uppercase">{title}</h2>
-      )}
+      <h2 className="special-bar">{title}</h2>
       {shown.length ? (
         <div className="mt-1.5 space-y-2">
           {bands.map((band, i) => (

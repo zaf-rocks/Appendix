@@ -27,19 +27,19 @@ function Games() {
     <PlayShell letters rail={rail} heroTitle="Games" heroLine="No APK. No store clerk. Just a tab that wants to play.">
       {rail === "b" ? (
         <>
-          <h2 className="text-[10px] font-medium tracking-wide text-muted uppercase">Top opens</h2>
+          <h2 className="special-bar">Top opens</h2>
           <RankList apps={free} swipe />
         </>
       ) : rail === "c" ? (
         <>
           <Rail title="Browser-native weird" apps={games.filter((a) => ["hextris", "play2048", "proxx", "krunker", "webamp"].includes(a.id) || a.aiBuilt)} />
-          <RailRule />
+          <RailRule i={0} />
           <Rail title="Kids can play" apps={games.filter((a) => a.genres.includes("kids"))} />
         </>
       ) : rail === "d" ? (
         AUDIENCES.filter((a) => a.match.includes("games") || a.id === "kids" || a.id === "gamers").map((aud, i) => (
           <div key={aud.id}>
-            {i ? <RailRule /> : null}
+            {i ? <RailRule i={i} /> : null}
             <Rail title={aud.label} apps={games.filter((g) => g.genres.some((x) => aud.match.includes(x)))} />
           </div>
         ))
@@ -56,9 +56,9 @@ function Games() {
       ) : (
         <>
           <Rail title="Suggested play" apps={games} special />
-          <RailRule />
+          <RailRule i={0} />
           <Rail title="Top free-to-open" apps={free} />
-          <RailRule />
+          <RailRule i={1} />
           <Rail title="Coming soon on the yard" apps={games.filter((a) => a.comingSoon)} />
         </>
       )}
