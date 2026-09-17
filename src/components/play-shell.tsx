@@ -119,7 +119,7 @@ export function PlayShell({
             />
             <div className="w-fit">
               <Link to="/" className="block">
-                <span className="font-mark inline-block text-[22px] leading-none tracking-wide text-white [transform:perspective(420px)_rotateX(12deg)] [text-shadow:0_1px_0_#8a7a5a,0_2px_0_#3a3224,0_8px_16px_rgba(0,0,0,0.55)]">
+                <span className="font-mark text-3d inline-block text-[22px] leading-none tracking-wide text-white [transform:perspective(420px)_rotateX(12deg)]">
                   Appendix
                 </span>
               </Link>
@@ -175,7 +175,7 @@ export function PlayShell({
         </div>
         {home ? null : (
           <div className="absolute inset-x-0 bottom-7 z-10 px-3">
-            <p className="font-display text-[18px] leading-none font-semibold tracking-tight [transform:perspective(380px)_rotateX(10deg)] [text-shadow:0_1px_0_#3a2060,0_6px_14px_rgba(0,0,0,0.55)]">
+            <p className="font-display text-3d text-[18px] leading-none font-semibold tracking-tight [transform:perspective(380px)_rotateX(10deg)]">
               {heroTitle || ""}
             </p>
           </div>

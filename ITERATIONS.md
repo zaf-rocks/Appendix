@@ -4,7 +4,7 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 
 **How to go back:** say the pass number (or a named beat: “single rows,” “monument hero,” “pre-well”). This file is the map. Snapshots live in git tags `pass-NN` when a pass is closed.
 
-**Current live pass:** **17 — thinner 2-line thresholds, hero row, All/Vibe swap, spectral cycle** (2026-09-17)
+**Current live pass:** **18 — flag-wave, 3-line thresholds, new faces, 3D type** (2026-09-17)
 
 ---
 
@@ -123,6 +123,13 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 **Asked:** Thresholds thinner, 2 per group, closer to category labels. Tagline “Putting Progressive in Progressive Web Apps” one line, bottom-right of hero, same row as app count (italic Orbitron). Toggle: left All (spectral), right Vibe (nebula), shorter, selected side animates. Spectral sequence everywhere, tiny white ticks, animated, ultra-smooth. Both lenses: galactic indigo/violet primary.  
 **Shipped:** Two 1px animated spec lines; tight gap above titles. Count + tagline share the hero baseline. Toggle flipped and shortened. ALL = spectral indigo. VIBE = nebula. Shared spec gradient (white 0.7% ticks).  
 **Snapshot:** pass-17
+
+---
+
+## Pass 18 — flag-wave, 3-line thresholds, new faces, 3D type (LIVE)
+**Asked:** Flag-wave from Vibe toggle on All and thresholds. Thresholds back to 3 lines (thin / 6× / thin). Random start, smoother, slower. No white in spectrum. Count: not italic, futuristic, smaller. Tagline: unique face. 3D type (thin outline + medium-heavy shadow).  
+**Shipped:** All toggle uses the same flag-wave as Vibe. Triple spec bars, 1px / 6px / 1px, staggered delays, 22s drift. Spectrum is bubblegum→royal loop, no white. Oxanium count. Fraunces italic tagline. 3D on mark, aisle titles, count, tagline.  
+**Snapshot:** pass-18
 
 ---
 
