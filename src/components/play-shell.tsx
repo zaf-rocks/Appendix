@@ -43,20 +43,27 @@ function LensToggle() {
   const { lens, setLens } = useLens();
   return (
     <div className="mt-1 w-full">
-      <div className="flex h-[22px] w-full rounded-full bg-black/45 p-[2px] text-[9px] font-semibold tracking-wide ring-1 ring-white/25">
-        {(["vibe", "all"] as const).map((l) => (
-          <button
-            key={l}
-            type="button"
-            onClick={() => setLens(l)}
-            className={cn(
-              "h-full flex-1 rounded-full uppercase",
-              lens === l ? (l === "vibe" ? "vibe-grad text-black" : "all-grad gold-sheen text-black") : "text-white/70",
-            )}
-          >
-            {l}
-          </button>
-        ))}
+      <div className="flex h-[16px] w-full rounded-full bg-black/55 p-[1px] text-[8px] font-semibold tracking-wide ring-1 ring-white/20">
+        <button
+          type="button"
+          onClick={() => setLens("all")}
+          className={cn(
+            "h-full flex-1 rounded-full uppercase",
+            lens === "all" ? "spec-fill spec-cycle text-black" : "text-white/70",
+          )}
+        >
+          all
+        </button>
+        <button
+          type="button"
+          onClick={() => setLens("vibe")}
+          className={cn(
+            "h-full flex-1 rounded-full uppercase",
+            lens === "vibe" ? "nebula-fill nebula-cycle text-white" : "text-white/70",
+          )}
+        >
+          vibe
+        </button>
       </div>
       <p className="mt-0.5 text-[8px] text-white/65">{lens === "vibe" ? "Vibe-coded PWAs" : "Every PWA we index"}</p>
     </div>
@@ -102,7 +109,7 @@ export function PlayShell({
         >
           <source src={hero.mp4} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,10,12,0.28)_0%,rgba(8,10,12,0.08)_42%,rgba(12,14,17,0.82)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,6,32,0.32)_0%,rgba(8,4,24,0.08)_42%,rgba(8,4,22,0.86)_100%)]" />
         <div className="absolute inset-x-0 top-0 z-10 flex items-start gap-2 px-3 pt-2.5">
           <div className="flex items-start gap-1.5">
             <img
@@ -166,25 +173,24 @@ export function PlayShell({
             </Link>
           </div>
         </div>
-        {home ? (
-          <p className="hero-tag absolute right-3 bottom-2 max-w-[52vw] text-right italic text-white/92">
-            Putting the Progressive in Progressive Web App.
-          </p>
-        ) : (
-          <div className="absolute inset-x-0 bottom-2 px-3">
-            <p className="font-display text-[18px] leading-none font-semibold tracking-tight [transform:perspective(380px)_rotateX(10deg)] [text-shadow:0_1px_0_#6a5a40,0_6px_14px_rgba(0,0,0,0.55)]">
+        {home ? null : (
+          <div className="absolute inset-x-0 bottom-7 z-10 px-3">
+            <p className="font-display text-[18px] leading-none font-semibold tracking-tight [transform:perspective(380px)_rotateX(10deg)] [text-shadow:0_1px_0_#3a2060,0_6px_14px_rgba(0,0,0,0.55)]">
               {heroTitle || ""}
             </p>
-            <p className="mt-1 max-w-[46ch] text-[10px] text-white/75">{heroLine || ""}</p>
           </div>
         )}
+        <div className="absolute inset-x-0 bottom-1.5 z-10 flex items-baseline justify-between gap-2 px-3">
+          <p className="hero-count shrink-0">
+            {n.toLocaleString()} {lens === "vibe" ? "Vibe Apps" : "All Apps"}
+          </p>
+          {home ? (
+            <p className="hero-tag min-w-0 flex-1 truncate text-right">Putting Progressive in Progressive Web Apps</p>
+          ) : (
+            <p className="hero-tag min-w-0 flex-1 truncate text-right">{heroLine || ""}</p>
+          )}
+        </div>
       </header>
-
-      <div className="flex items-end justify-between px-3 pt-1.5 pb-1">
-        <p className="text-[10px] tracking-wide text-muted uppercase">
-          {n.toLocaleString()} {lens === "vibe" ? "Vibe Apps" : "All Apps"}
-        </p>
-      </div>
 
       {letters ? (
         <div className="flex gap-1 overflow-x-auto px-2 py-1.5">

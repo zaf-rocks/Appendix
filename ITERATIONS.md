@@ -4,7 +4,7 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 
 **How to go back:** say the pass number (or a named beat: “single rows,” “monument hero,” “pre-well”). This file is the map. Snapshots live in git tags `pass-NN` when a pass is closed.
 
-**Current live pass:** **16 — only colorful triple thresholds** (2026-09-17)
+**Current live pass:** **17 — thinner 2-line thresholds, hero row, All/Vibe swap, spectral cycle** (2026-09-17)
 
 ---
 
@@ -116,6 +116,13 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 **Asked:** Two kinds of threshold lines were showing. Delete any single lines. The groups of 3 must not be gray — all three colorful.  
 **Shipped:** Removed the two single bars around letter tabs and the single underline under aisle titles. Sandwich is now thin/thick/thin of the same 4-color band. No gray hairlines.  
 **Snapshot:** pass-16
+
+---
+
+## Pass 17 — thinner 2-line thresholds, hero row, All/Vibe swap, spectral cycle (LIVE)
+**Asked:** Thresholds thinner, 2 per group, closer to category labels. Tagline “Putting Progressive in Progressive Web Apps” one line, bottom-right of hero, same row as app count (italic Orbitron). Toggle: left All (spectral), right Vibe (nebula), shorter, selected side animates. Spectral sequence everywhere, tiny white ticks, animated, ultra-smooth. Both lenses: galactic indigo/violet primary.  
+**Shipped:** Two 1px animated spec lines; tight gap above titles. Count + tagline share the hero baseline. Toggle flipped and shortened. ALL = spectral indigo. VIBE = nebula. Shared spec gradient (white 0.7% ticks).  
+**Snapshot:** pass-17
 
 ---
 

@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       { title: APP_NAME },
       {
         name: "description",
-        content: "Appendix — putting the progressive in Progressive Web Apps.",
+        content: "Appendix — putting progressive in Progressive Web Apps.",
       },
       { property: "og:image", content: "/og.jpg" },
       { name: "theme-color", content: "#0e1116" },

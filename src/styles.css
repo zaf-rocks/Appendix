@@ -1,29 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #101214;
-  --color-surface: #181b1e;
-  --color-raised: #22262b;
-  --color-fg: #e8eaed;
-  --color-muted: #9aa0a6;
-  --color-subtle: #6d737a;
-  --color-primary: #8ab4f8;
-  --color-primary-fg: #0b1220;
-  --color-get: #81c995;
-  --color-get-fg: #0c1a10;
-  --color-down: #f28b82;
-  --color-soon: #f5c542;
-  --color-border: #2d3136;
-  --color-line: #262a2e;
+  --color-bg: #05010c;
+  --color-surface: #0c0618;
+  --color-raised: #160b28;
+  --color-fg: #f6ecff;
+  --color-muted: #b9a6d4;
+  --color-subtle: #7a668f;
+  --color-primary: #b56bff;
+  --color-primary-fg: #12081e;
+  --color-get: #00e676;
+  --color-get-fg: #04140a;
+  --color-down: #ff3d6e;
+  --color-soon: #c6ff00;
+  --color-border: #2a1848;
+  --color-line: #1c1030;
   --color-gold: #d4af37;
   --color-rosegold: #b76e79;
-  --color-cat-sky: #5f8dd3;
-  --color-cat-mint: #3d9a78;
-  --color-cat-coral: #c97a4a;
-  --color-cat-rose: #b56b8a;
-  --color-cat-teal: #3d8f8a;
-  --color-cat-amber: #c4a35a;
-  --color-cat-indigo: #7b82c4;
+  --color-cat-sky: #3dc9ff;
+  --color-cat-mint: #00e676;
+  --color-cat-coral: #ff6a00;
+  --color-cat-rose: #ff3cf0;
+  --color-cat-teal: #00f5d4;
+  --color-cat-amber: #ff6a00;
+  --color-cat-indigo: #4f2bff;
   --color-cat-slate: #6b7280;
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -38,6 +38,27 @@
 
 @utility font-mark {
   font-family: var(--font-mark);
+}
+
+/* white 0.7% ticks · pink red orange lime forest turquoise sky navy indigo royal deep-violet pink white */
+:root {
+  --spec: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #ff3cf0 0.7%,
+    #ff003c 8.4%,
+    #ff6a00 16.2%,
+    #c6ff00 24.5%,
+    #00c853 33%,
+    #00f5d4 41.5%,
+    #3dc9ff 50%,
+    #1a4bff 58.5%,
+    #4f2bff 67%,
+    #9b22ff 76%,
+    #5a00c8 85.5%,
+    #ff3cf0 94.5%,
+    #ffffff 100%
+  );
 }
 
 html[data-theme="light"] {
@@ -57,18 +78,31 @@ html[data-theme="light"] {
 }
 
 html[data-lens="all"] {
-  --color-bg: #0a0908;
-  --color-surface: #14110e;
-  --color-raised: #1c1814;
-  --color-fg: #f3e6c8;
-  --color-muted: #b7a48a;
-  --color-subtle: #7a6a56;
-  --color-primary: #d4af37;
-  --color-primary-fg: #1a1208;
-  --color-get: #d4af37;
-  --color-get-fg: #1a1208;
-  --color-border: #3a3126;
-  --color-line: #2a241c;
+  --color-bg: #0a0620;
+  --color-surface: #120a2e;
+  --color-raised: #1a1040;
+  --color-fg: #f3eeff;
+  --color-muted: #b7a8d8;
+  --color-subtle: #7a6aa0;
+  --color-primary: #9b6bff;
+  --color-primary-fg: #12081e;
+  --color-get: #00e676;
+  --color-get-fg: #04140a;
+  --color-border: #2c1a55;
+  --color-line: #201040;
+}
+
+html[data-lens="vibe"] {
+  --color-bg: #05010c;
+  --color-surface: #0c0618;
+  --color-raised: #160b28;
+  --color-fg: #f6ecff;
+  --color-muted: #b9a6d4;
+  --color-subtle: #7a668f;
+  --color-primary: #c44dff;
+  --color-primary-fg: #12081e;
+  --color-border: #2a1848;
+  --color-line: #1c1030;
 }
 
 @layer base {
@@ -98,71 +132,68 @@ html[data-lens="all"] {
   }
 }
 
-.vibe-grad {
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.85) 0%,
-    #ffd0e6 3%,
-    #ff2d78 16%,
-    #ff3b30 28%,
-    #ff7a00 40%,
-    #ffd400 52%,
-    #34c759 64%,
-    #00c2ff 76%,
-    #5856d6 88%,
-    #c44dff 100%
-  );
+html[data-lens="all"] body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(70, 30, 180, 0.28), transparent 60%),
+    #0a0620;
 }
 
-.all-grad {
-  background-image: linear-gradient(90deg, #1a1208 0%, #6b4a2a 28%, #b76e79 55%, #d4af37 82%, #f3e5ab 100%);
+html[data-lens="vibe"] body {
+  background:
+    radial-gradient(ellipse 70% 45% at 18% 0%, rgba(140, 20, 200, 0.38), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 92% 18%, rgba(40, 0, 140, 0.42), transparent 50%),
+    radial-gradient(ellipse 50% 55% at 48% 110%, rgba(180, 0, 90, 0.22), transparent 52%),
+    #05010c;
 }
 
-html[data-lens="all"] .vibe-grad {
-  background-image: linear-gradient(90deg, #1a1208 0%, #6b4a2a 28%, #b76e79 55%, #d4af37 82%, #f3e5ab 100%);
+.spec-fill {
+  background-image: var(--spec);
+  background-size: 200% 100%;
+}
+
+.spec-cycle {
+  animation: spec-cycle 12s linear infinite;
+}
+
+.nebula-fill {
+  background-image: linear-gradient(90deg, #140628, #4b0082, #2a0a55, #7b1fff, #1a0538, #4b0082, #140628);
+  background-size: 200% 100%;
+}
+
+.nebula-cycle {
+  animation: spec-cycle 10s linear infinite;
+}
+
+@keyframes spec-cycle {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
 }
 
 .chip-lens {
   border: 1px solid transparent;
   background:
     linear-gradient(var(--color-raised), var(--color-raised)) padding-box,
-    linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.7),
-        #ff2d78,
-        #ff7a00,
-        #ffd400,
-        #34c759,
-        #00c2ff,
-        #5856d6,
-        #c44dff
-      )
-      border-box;
-}
-
-html[data-lens="all"] .chip-lens {
-  background:
-    linear-gradient(var(--color-raised), var(--color-raised)) padding-box,
-    linear-gradient(90deg, #1a1208, #b76e79, #d4af37) border-box;
+    var(--spec) border-box;
+  background-size: auto, 200% 100%;
+  animation: spec-cycle 12s linear infinite;
 }
 
 .chip-lens-on {
   color: var(--color-bg);
   background:
-    linear-gradient(var(--color-fg), var(--color-fg)) padding-box,
-    linear-gradient(90deg, #fff, #ff2d78, #ff7a00, #ffd400, #34c759, #00c2ff, #5856d6, #c44dff) border-box;
-}
-
-html[data-lens="all"] .chip-lens-on {
-  color: #1a1208;
-  background:
-    linear-gradient(#d4af37, #f3e5ab) padding-box,
-    linear-gradient(90deg, #1a1208, #b76e79, #d4af37) border-box;
+    var(--spec) padding-box,
+    var(--spec) border-box;
+  background-size: 200% 100%;
+  animation: spec-cycle 12s linear infinite;
 }
 
 .special-bar {
   position: relative;
-  padding: 5px 2px 4px;
+  padding: 2px 2px 3px;
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 600;
@@ -172,46 +203,72 @@ html[data-lens="all"] .chip-lens-on {
   transform-origin: left center;
 }
 
-.gold-sheen {
-  background-size: 200% 100%;
-  animation: sheen 7s linear infinite;
+.rail-rule {
+  margin: 10px -0.75rem 1px;
 }
 
-@keyframes sheen {
-  from {
-    background-position: 0% 50%;
-  }
-  to {
-    background-position: 200% 50%;
-  }
+.spec-line {
+  height: 1px;
+  background-image: var(--spec);
+  background-size: 200% 100%;
+  animation: spec-cycle 12s linear infinite;
+}
+
+.spec-line-b {
+  margin-top: 2px;
+}
+
+@property --spin {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 180deg;
 }
 
 .ident-ring {
   background: conic-gradient(
-    from 180deg,
-    #ff2d78,
-    #ff3b30,
-    #ff7a00,
-    #ffd400,
-    #34c759,
-    #00c2ff,
-    #5856d6,
-    #c44dff,
-    #ff2d78
+    from var(--spin),
+    #ffffff 0%,
+    #ff3cf0 3%,
+    #ff003c 10%,
+    #ff6a00 18%,
+    #c6ff00 28%,
+    #00c853 38%,
+    #00f5d4 48%,
+    #3dc9ff 58%,
+    #1a4bff 68%,
+    #4f2bff 76%,
+    #9b22ff 84%,
+    #5a00c8 92%,
+    #ff3cf0 97%,
+    #ffffff 100%
   );
+  animation: ident-spin 14s linear infinite;
 }
 
-html[data-lens="all"] .ident-ring {
-  background: conic-gradient(from 180deg, #1a1208, #6b4a2a, #b76e79, #d4af37, #f3e5ab, #b76e79, #1a1208);
+@keyframes ident-spin {
+  to {
+    --spin: 540deg;
+  }
 }
 
 .hero-tag {
   font-family: var(--font-display);
-  font-size: clamp(9px, 2.6vw, 12px);
+  font-size: clamp(8px, 2.35vw, 11px);
   font-style: italic;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.75);
+}
+
+.hero-count {
+  font-family: var(--font-display);
+  font-size: clamp(10px, 2.6vw, 12px);
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
 }
 
 @media (prefers-reduced-motion: reduce) {
