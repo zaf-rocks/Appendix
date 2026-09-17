@@ -198,12 +198,11 @@ html[data-lens="all"] .special-bar::after {
 
 .rail-rule-hair {
   height: 1px;
-  transform: scaleY(0.5);
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 html[data-lens="all"] .rail-rule-hair {
-  background: rgba(243, 230, 200, 0.28);
+  background: rgba(243, 230, 200, 0.45);
 }
 
 .gold-sheen {

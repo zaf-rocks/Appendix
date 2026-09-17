@@ -4,7 +4,7 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 
 **How to go back:** say the pass number (or a named beat: “single rows,” “monument hero,” “pre-well”). This file is the map. Snapshots live in git tags `pass-NN` when a pass is closed.
 
-**Current live pass:** **14 — aisle type + original thresholds** (2026-09-17)
+**Current live pass:** **15 — threshold match to screenshot** (2026-09-17)
 
 ---
 
@@ -102,6 +102,13 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 **Asked:** Category titles (Games, Productivity, …) should match Editors’ Choice / Sponsored type. Restore original threshold: super-thin hairline, 4-color bar, super-thin hairline. One between each aisle, bands alternating down the page.  
 **Shipped:** Every rail title uses `special-bar` (Orbitron, same size as Sponsored/Editors). `RailRule` is hairline / 2px four-color / hairline. Four bands cycle.  
 **Snapshot:** pass-14
+
+---
+
+## Pass 15 — threshold match to screenshot (LIVE)
+**Asked:** Match the attached shot: sandwich threshold between every aisle. Super-thin hairline, 4-color bar, super-thin hairline. Visible, full width.  
+**Shipped:** Hairlines brighter (not half-pixel ghosts). Color bar 3px, full-bleed. Still one sandwich per aisle, four bands cycling.  
+**Snapshot:** pass-15
 
 ---
 

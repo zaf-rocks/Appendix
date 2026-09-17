@@ -7,10 +7,10 @@ const BANDS = [
 
 export function RailRule({ i = 0 }: { i?: number; thin?: boolean }) {
   return (
-    <div className="my-2.5" aria-hidden>
+    <div className="-mx-3 my-3" aria-hidden>
       <div className="rail-rule-hair" />
       <div
-        className="my-[3px] h-[2px] rounded-full opacity-95"
+        className="my-[3px] h-[3px]"
         style={{ backgroundImage: BANDS[i % BANDS.length] }}
       />
       <div className="rail-rule-hair" />
