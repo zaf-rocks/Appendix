@@ -4,7 +4,7 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 
 **How to go back:** say the pass number (or a named beat: “single rows,” “monument hero,” “pre-well”). This file is the map. Snapshots live in git tags `pass-NN` when a pass is closed.
 
-**Current live pass:** **15 — threshold match to screenshot** (2026-09-17)
+**Current live pass:** **16 — only colorful triple thresholds** (2026-09-17)
 
 ---
 
@@ -109,6 +109,13 @@ Living log so Derek can say “go back to pass N” without reconstructing from 
 **Asked:** Match the attached shot: sandwich threshold between every aisle. Super-thin hairline, 4-color bar, super-thin hairline. Visible, full width.  
 **Shipped:** Hairlines brighter (not half-pixel ghosts). Color bar 3px, full-bleed. Still one sandwich per aisle, four bands cycling.  
 **Snapshot:** pass-15
+
+---
+
+## Pass 16 — only colorful triple thresholds (LIVE)
+**Asked:** Two kinds of threshold lines were showing. Delete any single lines. The groups of 3 must not be gray — all three colorful.  
+**Shipped:** Removed the two single bars around letter tabs and the single underline under aisle titles. Sandwich is now thin/thick/thin of the same 4-color band. No gray hairlines.  
+**Snapshot:** pass-16
 
 ---
 

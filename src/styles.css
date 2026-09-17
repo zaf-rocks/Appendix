@@ -172,39 +172,6 @@ html[data-lens="all"] .chip-lens-on {
   transform-origin: left center;
 }
 
-.special-bar::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.7),
-    #ff2d78,
-    #ff7a00,
-    #ffd400,
-    #34c759,
-    #00c2ff,
-    #5856d6,
-    #c44dff
-  );
-}
-
-html[data-lens="all"] .special-bar::after {
-  background-image: linear-gradient(90deg, #1a1208, #b76e79, #d4af37, #f3e5ab);
-}
-
-.rail-rule-hair {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.55);
-}
-
-html[data-lens="all"] .rail-rule-hair {
-  background: rgba(243, 230, 200, 0.45);
-}
-
 .gold-sheen {
   background-size: 200% 100%;
   animation: sheen 7s linear infinite;

@@ -185,10 +185,6 @@ export function PlayShell({
           {n.toLocaleString()} {lens === "vibe" ? "Vibe Apps" : "All Apps"}
         </p>
       </div>
-      <div
-        className="mx-3 h-[2px] rounded-full"
-        style={{ backgroundImage: "linear-gradient(90deg,#ff8ab4,#ff2d55,#ff7a00,#ffd60a)" }}
-      />
 
       {letters ? (
         <div className="flex gap-1 overflow-x-auto px-2 py-1.5">
@@ -206,12 +202,6 @@ export function PlayShell({
             </Link>
           ))}
         </div>
-      ) : null}
-      {letters ? (
-        <div
-          className="mx-3 mb-1 h-[2px] rounded-full"
-          style={{ backgroundImage: "linear-gradient(90deg,#32ade6,#5856d6,#af52de,#ff2d78)" }}
-        />
       ) : null}
 
       <main className="px-3 pt-2 pb-24">{children}</main>

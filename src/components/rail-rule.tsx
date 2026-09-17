@@ -6,14 +6,12 @@ const BANDS = [
 ];
 
 export function RailRule({ i = 0 }: { i?: number; thin?: boolean }) {
+  const band = BANDS[i % BANDS.length];
   return (
     <div className="-mx-3 my-3" aria-hidden>
-      <div className="rail-rule-hair" />
-      <div
-        className="my-[3px] h-[3px]"
-        style={{ backgroundImage: BANDS[i % BANDS.length] }}
-      />
-      <div className="rail-rule-hair" />
+      <div className="h-px" style={{ backgroundImage: band }} />
+      <div className="my-[3px] h-[3px]" style={{ backgroundImage: band }} />
+      <div className="h-px" style={{ backgroundImage: band }} />
     </div>
   );
 }
