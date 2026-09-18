@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Bookmark, Star } from "lucide-react";
 import { AppIcon } from "@/components/app-icon";
+import { PeekSave } from "@/components/peek-save";
 import { StatusDot } from "@/components/store-shell";
 import { listingStatus, type AppEntry } from "@/lib/catalog";
 import { isSaved, openCount, toggleSave } from "@/lib/yard";
@@ -118,49 +119,67 @@ export function FeatureRail({ title, apps, kind }: { title: string; apps: AppEnt
   );
 }
 
-export function RankList({ apps, swipe }: { apps: AppEntry[]; swipe?: boolean }) {
+export function RankList({ apps, swipe, onChanged }: { apps: AppEntry[]; swipe?: boolean; onChanged?: () => void }) {
   return (
     <ol className="mt-1">
       {apps.slice(0, 120).map((app, i) => (
-        <RankRow key={app.id} app={app} n={i + 1} swipe={swipe} />
+        <RankRow key={app.id} app={app} n={i + 1} swipe={swipe} onChanged={onChanged} />
       ))}
     </ol>
   );
 }
 
-function RankRow({ app, n, swipe }: { app: AppEntry; n: number; swipe?: boolean }) {
+function RankRow({ app, n, swipe, onChanged }: { app: AppEntry; n: number; swipe?: boolean; onChanged?: () => void }) {
   const nav = useNavigate();
   const startX = useRef(0);
+  const ignore = useRef(false);
   const [dx, setDx] = useState(0);
   const [saved, setSaved] = useState(() => isSaved(app.id));
   const [peek, setPeek] = useState(false);
+  const [menu, setMenu] = useState(false);
   const clicks = app.clicks ?? openCount(app.id);
   const hold = useRef<number | null>(null);
   const status = listingStatus(app);
 
+  function openMenu() {
+    setMenu(true);
+  }
+
   function onStart(x: number) {
     if (!swipe) return;
+    if (x < 28 || x > window.innerWidth - 28) {
+      ignore.current = true;
+      startX.current = 0;
+      return;
+    }
+    ignore.current = false;
     startX.current = x;
   }
   function onMove(x: number) {
-    if (!swipe || !startX.current) return;
+    if (!swipe || ignore.current || !startX.current) return;
     setDx(Math.max(-88, Math.min(88, x - startX.current)));
   }
   function onEnd() {
     if (!swipe) return;
-    if (dx > 56) setSaved(save(app.id));
-    else if (dx < -56) setPeek((p) => !p);
+    if (!ignore.current) {
+      if (dx > 56) {
+        if (isSaved(app.id)) openMenu();
+        else setSaved(save(app.id));
+        onChanged?.();
+      } else if (dx < -56) setPeek((p) => !p);
+    }
     setDx(0);
     startX.current = 0;
+    ignore.current = false;
   }
 
   return (
-    <li className="border-b border-line">
+    <li className={cn("border-b border-line", peek && "min-h-[6.5rem]")}>
       <div
         className="relative overflow-hidden"
         onTouchStart={(e) => {
           onStart(e.touches[0].clientX);
-          hold.current = window.setTimeout(() => setSaved(save(app.id)), 450);
+          hold.current = window.setTimeout(() => openMenu(), 450);
         }}
         onTouchMove={(e) => {
           onMove(e.touches[0].clientX);
@@ -175,16 +194,21 @@ function RankRow({ app, n, swipe }: { app: AppEntry; n: number; swipe?: boolean 
         onMouseUp={onEnd}
         onContextMenu={(e) => {
           e.preventDefault();
-          setSaved(save(app.id));
+          openMenu();
         }}
       >
         {swipe ? (
-          <div className="absolute inset-y-0 right-0 grid w-20 place-items-center bg-get text-[10px] font-semibold text-get-fg">
-            Save
-          </div>
+          <>
+            <div className="swipe-save-label absolute inset-y-0 left-0 grid w-20 place-items-center text-[10px] font-semibold">
+              Save
+            </div>
+            <div className="swipe-peek-label absolute inset-y-0 right-0 grid w-20 place-items-center text-[10px] font-semibold">
+              PEEK
+            </div>
+          </>
         ) : null}
         <div
-          className="flex w-full items-center gap-1.5 bg-bg py-1.5 text-left"
+          className="relative flex w-full items-center gap-1.5 bg-bg py-1.5 text-left"
           style={swipe ? { transform: `translateX(${dx}px)` } : undefined}
         >
           <button
@@ -206,10 +230,14 @@ function RankRow({ app, n, swipe }: { app: AppEntry; n: number; swipe?: boolean 
           </button>
           <button
             type="button"
-            aria-label={saved ? "Unsave" : "Save"}
+            aria-label={saved ? "Bookmark options" : "Save"}
             onClick={(e) => {
               e.stopPropagation();
-              setSaved(save(app.id));
+              if (isSaved(app.id)) openMenu();
+              else {
+                setSaved(save(app.id));
+                onChanged?.();
+              }
             }}
             className="grid size-9 place-items-center"
           >
@@ -222,12 +250,29 @@ function RankRow({ app, n, swipe }: { app: AppEntry; n: number; swipe?: boolean 
         </div>
       </div>
       {peek ? (
-        <p className="pb-2 pl-8 text-[11px] text-muted">
-          {app.tagline}
-          {app.platform ? ` · Built with ${app.platform}` : ""}
-          {app.genres[0] ? ` · ${app.genres[0]}` : ""}
-          {status === "soon" ? " · Coming soon" : status === "dead" ? " · Unavailable" : ""}
-        </p>
+        <div className="pb-2 pl-8 text-[11px] text-muted">
+          <p>{app.tagline}</p>
+          <p className="mt-0.5">
+            {app.developer}
+            {app.platform ? ` · Built with ${app.platform}` : ""}
+            {app.genres[0] ? ` · ${app.genres[0]}` : ""}
+            {app.installable ? " · Installable" : ""}
+            {app.offline ? " · Offline" : ""}
+            {app.aiBuilt ? " · AI assisted" : ""}
+            {status === "soon" ? " · Coming soon" : status === "dead" ? " · Unavailable" : ""}
+          </p>
+          {app.description ? <p className="mt-0.5 line-clamp-3">{app.description}</p> : null}
+        </div>
+      ) : null}
+      {menu ? (
+        <PeekSave
+          app={app}
+          onClose={() => {
+            setMenu(false);
+            setSaved(isSaved(app.id));
+            onChanged?.();
+          }}
+        />
       ) : null}
     </li>
   );

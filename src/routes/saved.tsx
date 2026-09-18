@@ -1,9 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { PlayShell } from "@/components/play-shell";
 import { RankList } from "@/components/rails";
 import { listStore } from "@/lib/store-api";
-import { customIds, customName, favIds, savedIds, setCustomName, setSavedOrder, toggleCustom, toggleFav } from "@/lib/yard";
+import {
+  addStack,
+  deleteStack,
+  favIds,
+  listStacks,
+  renameStack,
+  savedIds,
+  setFavOrder,
+  setSavedOrder,
+  setStackOrder,
+} from "@/lib/yard";
 import { cn } from "@/lib/cn";
 
 export const Route = createFileRoute("/saved")({
@@ -11,89 +22,120 @@ export const Route = createFileRoute("/saved")({
   component: Saved,
 });
 
-function Saved() {
+type Tab = { id: string; label: string };
+
+function tabLabel(text: string) {
+  const t = text.trim() || "Stack";
+  return (
+    <>
+      <span className="text-[12px] leading-none">{t[0]}</span>
+      <span className="text-[9px] leading-none tracking-wide uppercase">{t.slice(1)}</span>
+    </>
+  );
+}
+
+export function Saved() {
   const catalog = Route.useLoaderData();
-  const [tab, setTab] = useState<"all" | "fav" | "custom">("all");
+  const [tab, setTab] = useState("all");
   const [q, setQ] = useState("");
-  const [name, setName] = useState(() => customName());
+  const [stacks, setStacks] = useState(() => listStacks());
   const [, bump] = useState(0);
 
   const ids =
-    tab === "fav" ? favIds() : tab === "custom" ? customIds() : savedIds();
+    tab === "all" ? savedIds() : tab === "fav" ? favIds() : stacks.find((s) => s.id === tab)?.ids || [];
   const apps = useMemo(() => {
     const query = q.trim().toLowerCase();
-    return catalog.filter((a) => ids.includes(a.id) && (!query || a.name.toLowerCase().includes(query) || a.developer.toLowerCase().includes(query)));
+    return catalog.filter(
+      (a) => ids.includes(a.id) && (!query || a.name.toLowerCase().includes(query) || a.developer.toLowerCase().includes(query)),
+    );
   }, [catalog, ids, q]);
+
+  const tabs: Tab[] = [{ id: "all", label: "Bookmarks" }, { id: "fav", label: "Favorites" }, ...stacks.map((s) => ({ id: s.id, label: s.name }))];
+  const activeStack = stacks.find((s) => s.id === tab);
+
+  function move(i: number, dir: -1 | 1) {
+    const j = i + dir;
+    if (j < 0 || j >= ids.length) return;
+    const next = [...ids];
+    [next[i], next[j]] = [next[j], next[i]];
+    if (tab === "all") setSavedOrder(next);
+    else if (tab === "fav") setFavOrder(next);
+    else setStackOrder(tab, next);
+    bump((n) => n + 1);
+  }
 
   return (
     <PlayShell heroTitle="Bookmarks" heroLine="Not downloads. The ones you meant to keep.">
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Search bookmarks"
-        className="h-8 w-full rounded-md border border-border bg-surface px-3 text-[12px]"
-      />
-      <div className="mt-2 flex gap-1">
-        {([
-          ["all", "Bookmarks"],
-          ["fav", "Favorites"],
-          ["custom", name],
-        ] as const).map(([id, label]) => (
+      <label className="bookmark-search">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search bookmarks"
+        />
+        <Search className="bookmark-search-icon" aria-hidden />
+      </label>
+      <div className="mt-2 flex flex-wrap gap-1">
+        {tabs.map((t, i) => (
           <button
-            key={id}
+            key={t.id}
             type="button"
-            onClick={() => setTab(id)}
-            className={cn("chip-lens h-7 rounded-full px-3 text-[11px]", tab === id && "chip-lens-on")}
+            onClick={() => setTab(t.id)}
+            data-tone={String((i % 3) + 1)}
+            className={cn("stack-tab", tab === t.id && "stack-tab-on")}
           >
-            {label}
+            <span className="stack-tab-face">{tabLabel(t.label)}</span>
           </button>
         ))}
-      </div>
-      {tab === "custom" ? (
-        <input
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value);
-            setCustomName(e.target.value);
+        <button
+          type="button"
+          className="stack-tab stack-tab-add"
+          onClick={() => {
+            const next = addStack(`Stack ${stacks.length + 1}`);
+            setStacks(next);
+            setTab(next[next.length - 1].id);
           }}
-          className="mt-2 h-8 w-full rounded-md border border-border bg-surface px-2 text-[12px]"
-        />
+        >
+          <span className="stack-tab-face">+</span>
+        </button>
+      </div>
+      {activeStack ? (
+        <div className="mt-2 flex gap-2">
+          <input
+            value={activeStack.name}
+            onChange={(e) => setStacks(renameStack(activeStack.id, e.target.value))}
+            className="h-8 min-w-0 flex-1 rounded-md border border-white/10 bg-black/30 px-2 text-[12px]"
+          />
+          <button
+            type="button"
+            className="text-[11px] text-down"
+            onClick={() => {
+              const next = deleteStack(activeStack.id);
+              setStacks(next);
+              setTab("all");
+            }}
+          >
+            Delete tab
+          </button>
+        </div>
       ) : null}
       <p className="mt-2 text-[10px] text-muted">
-        Long-press a row to pin it to Favorites or {name}. Drag order is the save order — use the arrows.
+        Swipe right to save. Already saved? Swipe right or long-press for stacks. Swipe left to peek. ↑↓ to reorder.
       </p>
       {apps.length ? (
         <>
-          <RankList apps={apps} swipe />
+          <RankList apps={apps} swipe onChanged={() => bump((n) => n + 1)} />
           <div className="mt-2 flex flex-wrap gap-1">
             {apps.map((a, i) => (
-              <button
-                key={a.id}
-                type="button"
-                className="text-[10px] text-muted"
-                onClick={() => {
-                  const next = [...ids];
-                  if (i === 0) return;
-                  [next[i - 1], next[i]] = [next[i], next[i - 1]];
-                  if (tab === "all") setSavedOrder(next);
-                  bump((n) => n + 1);
-                }}
-              >
-                ↑ {a.name}
-              </button>
+              <span key={a.id} className="flex items-center gap-1 text-[10px] text-muted">
+                <button type="button" onClick={() => move(i, -1)} aria-label={`Move ${a.name} up`}>
+                  ↑
+                </button>
+                <button type="button" onClick={() => move(i, 1)} aria-label={`Move ${a.name} down`}>
+                  ↓
+                </button>
+                {a.name}
+              </span>
             ))}
-          </div>
-          <div className="mt-2 flex gap-2 text-[11px]">
-            {apps[0] ? (
-              <>
-                <button type="button" onClick={() => { toggleFav(apps[0].id); bump((n) => n + 1); }} className="text-primary">
-                  Favorite first
-                </button>
-                <button type="button" onClick={() => { toggleCustom(apps[0].id); bump((n) => n + 1); }} className="text-primary">
-                  Add first to {name}
-                </button>
-              </>
-            ) : null}
           </div>
         </>
       ) : (

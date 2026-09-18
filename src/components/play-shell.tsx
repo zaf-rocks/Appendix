@@ -28,7 +28,8 @@ function heroFor(path: string) {
   if (path === "/games") return { mp4: "/heroes/games.mp4", poster: "/heroes/games.jpg" };
   if (path === "/flints" || path === "/desk") return { mp4: "/heroes/desk.mp4", poster: "/heroes/desk.jpg" };
   if (path === "/people") return { mp4: "/heroes/home-d.mp4", poster: "/heroes/home-d.jpg" };
-  if (path === "/find" || path === "/saved" || path === "/forge" || path === "/census")
+  if (path === "/saved") return { mp4: "/heroes/bookmarks.mp4", poster: "/heroes/bookmarks.jpg" };
+  if (path === "/find" || path === "/forge" || path === "/census")
     return { mp4: "/heroes/home-e.mp4", poster: "/heroes/home-e.jpg" };
   return { mp4: "/heroes/home-a.mp4", poster: "/heroes/home-a.jpg" };
 }
@@ -43,7 +44,7 @@ function LensToggle() {
   const { lens, setLens } = useLens();
   return (
     <div className="mt-1 w-full">
-      <div className="flex h-[16px] w-full rounded-full bg-black/55 p-[1px] text-[8px] font-semibold tracking-wide ring-1 ring-white/20">
+      <div className="hero-lift flex h-[16px] w-full rounded-full bg-black/55 p-[1px] text-[8px] font-semibold tracking-wide ring-1 ring-white/20">
         <button
           type="button"
           onClick={() => setLens("all")}
@@ -115,7 +116,7 @@ export function PlayShell({
             <img
               src="/mark-a.jpg"
               alt=""
-              className="size-[3.35rem] shrink-0 rounded-[10px] object-cover ring-1 ring-white/25"
+              className="hero-lift size-[3.35rem] shrink-0 rounded-[10px] object-cover ring-1 ring-white/25"
             />
             <div className="w-fit">
               <Link to="/" className="block">
@@ -129,18 +130,17 @@ export function PlayShell({
           <div className="ml-auto flex items-center gap-3 pt-0.5">
             <Link
               to="/saved"
-              className={cn(
-                "grid size-11 place-items-center rounded-full ring-1 backdrop-blur",
-                savedOn ? "bg-cat-amber text-black ring-white/50" : "bg-black/50 text-cat-amber ring-white/20",
-              )}
+              className={cn("bookmark-btn", savedOn && "bookmark-btn-on")}
               aria-label="Bookmarks"
             >
-              <Bookmark className={cn("size-5", savedOn ? "fill-black" : "")} />
+              <span className="bookmark-btn-face">
+                <Bookmark className="bookmark-btn-icon" />
+              </span>
             </Link>
             <Link
               to="/flints"
               className={cn(
-                "grid size-11 place-items-center rounded-full ring-1 backdrop-blur",
+                "hero-lift grid size-11 place-items-center rounded-full ring-1 backdrop-blur",
                 flintsOn ? "bg-get text-get-fg ring-white/50" : "bg-black/50 text-get ring-white/20",
               )}
               aria-label="Flints"
@@ -150,7 +150,7 @@ export function PlayShell({
             <Link
               to="/alerts"
               className={cn(
-                "relative grid size-11 place-items-center rounded-full ring-1 backdrop-blur",
+                "hero-lift relative grid size-11 place-items-center rounded-full ring-1 backdrop-blur",
                 alertsOn ? "bg-primary text-primary-fg ring-white/50" : "bg-black/50 text-primary ring-white/20",
               )}
               aria-label="Alerts"
@@ -159,7 +159,7 @@ export function PlayShell({
             </Link>
             <Link
               to="/me"
-              className={cn("ident-ring grid size-[3.35rem] place-items-center overflow-hidden rounded-full p-[2px]")}
+              className={cn("ident-ring hero-lift grid size-[3.35rem] place-items-center overflow-hidden rounded-full p-[2px]")}
               aria-label="Identity"
             >
               <span
@@ -173,7 +173,7 @@ export function PlayShell({
             </Link>
           </div>
         </div>
-        {home ? null : (
+        {home || savedOn ? null : (
           <div className="absolute inset-x-0 bottom-7 z-10 px-3">
             <p className="font-display text-3d text-[18px] leading-none font-semibold tracking-tight [transform:perspective(380px)_rotateX(10deg)]">
               {heroTitle || ""}
@@ -181,13 +181,19 @@ export function PlayShell({
           </div>
         )}
         <div className="absolute inset-x-0 bottom-1.5 z-10 flex items-baseline justify-between gap-2 px-3">
-          <p className="hero-count shrink-0">
-            {n.toLocaleString()} {lens === "vibe" ? "Vibe Apps" : "All Apps"}
-          </p>
+          {savedOn ? (
+            <p className="bookmark-hero-title shrink-0">{heroTitle || "Bookmarks"}</p>
+          ) : home && (rail || "a") === "a" ? (
+            <p className="hero-count shrink-0">
+              {n.toLocaleString()} {lens === "vibe" ? "Vibe Apps" : "All Apps"}
+            </p>
+          ) : (
+            <span />
+          )}
           {home ? (
             <p className="hero-tag min-w-0 flex-1 truncate text-right">Putting Progressive in Progressive Web Apps</p>
           ) : (
-            <p className="hero-tag min-w-0 flex-1 truncate text-right">{heroLine || ""}</p>
+            <p className={cn("hero-tag min-w-0 flex-1 truncate text-right", savedOn && "bookmark-hero-tag")}>{heroLine || ""}</p>
           )}
         </div>
       </header>

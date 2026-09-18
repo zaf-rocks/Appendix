@@ -4,7 +4,7 @@ export type Lens = "vibe" | "all";
 const KEY = "appendix-lens";
 
 const Ctx = createContext<{ lens: Lens; setLens: (l: Lens) => void }>({
-  lens: "vibe",
+  lens: "all",
   setLens: () => {},
 });
 
@@ -14,19 +14,9 @@ function apply(l: Lens) {
 }
 
 export function LensProvider({ children }: { children: ReactNode }) {
-  const [lens, setLensState] = useState<Lens>("vibe");
+  const [lens, setLensState] = useState<Lens>("all");
   useEffect(() => {
-    try {
-      const v = localStorage.getItem(KEY);
-      if (v === "all" || v === "vibe") {
-        setLensState(v);
-        apply(v);
-        return;
-      }
-    } catch {
-      /* first visit stays vibe */
-    }
-    apply("vibe");
+    apply("all");
   }, []);
   function setLens(l: Lens) {
     setLensState(l);

@@ -93,7 +93,7 @@ html[data-theme="light"] {
 }
 
 html[data-lens="all"] {
-  --color-bg: #0a0620;
+  --color-bg: #0e0e10;
   --color-surface: #120a2e;
   --color-raised: #1a1040;
   --color-fg: #f3eeff;
@@ -147,10 +147,11 @@ html[data-lens="vibe"] {
   }
 }
 
-html[data-lens="all"] body {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(70, 30, 180, 0.28), transparent 60%),
-    #0a0620;
+html[data-lens="all"] body,
+html[data-lens="all"] #app,
+html[data-lens="all"] .min-h-dvh.bg-bg {
+  background-color: #0e0e10;
+  background-image: linear-gradient(180deg, #1a1a1d 0%, #0c0c0e 48%, #060607 100%);
 }
 
 html[data-lens="vibe"] body {
@@ -313,6 +314,248 @@ html[data-lens="vibe"] body {
     0 1px 0 rgba(18, 8, 40, 0.9),
     0 2px 0 rgba(8, 4, 22, 0.7),
     0 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+.hero-lift {
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.bookmark-btn {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(10, 10, 14, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.16),
+    0 3px 6px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+}
+
+.bookmark-btn-face {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.bookmark-btn-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: #ff1e32;
+  stroke-width: 2.2px;
+  filter: drop-shadow(0 0 5px rgba(255, 32, 48, 0.85));
+}
+
+.bookmark-btn-on {
+  background: rgba(8, 8, 12, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 3px 6px rgba(0, 0, 0, 0.55),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.bookmark-btn-on .bookmark-btn-face {
+  background-image: linear-gradient(
+    118deg,
+    #ff1238 0%,
+    #ff2a2a 28%,
+    #ff6a00 62%,
+    #ff3b1a 100%
+  );
+  background-size: 220% 220%;
+  animation: bookmark-flag 2.6s ease-in-out infinite;
+  transform: perspective(280px) rotateZ(-8deg) rotateY(-6deg);
+}
+
+.bookmark-btn-on .bookmark-btn-icon {
+  color: rgba(12, 12, 16, 0.72);
+  fill: rgba(10, 10, 14, 0.5);
+  filter: none;
+}
+
+@keyframes bookmark-flag {
+  0%,
+  100% {
+    background-position: 0% 42%;
+    transform: perspective(280px) rotateZ(-10deg) rotateY(-8deg) skewY(-2deg);
+  }
+  50% {
+    background-position: 100% 58%;
+    transform: perspective(280px) rotateZ(9deg) rotateY(7deg) skewY(2deg);
+  }
+}
+
+.bookmark-hero-title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+  -webkit-text-stroke: 0.4px rgba(6, 2, 16, 0.7);
+  paint-order: stroke fill;
+  text-shadow:
+    0 1px 0 rgba(18, 8, 40, 0.95),
+    0 2px 0 rgba(8, 4, 22, 0.8),
+    0 3px 0 rgba(0, 0, 0, 0.45),
+    0 6px 14px rgba(0, 0, 0, 0.55);
+}
+
+.bookmark-hero-tag {
+  font-size: clamp(10px, 2.5vw, 13px);
+  text-shadow:
+    0 1px 0 rgba(18, 8, 40, 0.9),
+    0 2px 0 rgba(8, 4, 22, 0.7),
+    0 3px 0 rgba(0, 0, 0, 0.4),
+    0 5px 12px rgba(0, 0, 0, 0.55);
+}
+
+.bookmark-search {
+  position: relative;
+  display: block;
+}
+
+.bookmark-search input {
+  height: 32px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(32, 32, 36, 0.55);
+  padding: 0 36px 0 12px;
+  color: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.bookmark-search-icon {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  padding: 3px;
+  border-radius: 999px;
+  transform: translateY(-50%);
+  color: rgba(12, 12, 16, 0.7);
+  background: rgba(10, 10, 14, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.stack-tab {
+  --stack-a: #ff3cf0;
+  --stack-b: #ff1e32;
+  --stack-c: #ff6a00;
+  --stack-d: #ffe600;
+  --spin: 0deg;
+  position: relative;
+  isolation: isolate;
+  height: 28px;
+  border-radius: 999px;
+  padding: 1px;
+  color: #fff;
+  background: rgba(10, 10, 14, 0.45);
+}
+
+.stack-tab[data-tone="2"] {
+  --stack-a: #ff6a00;
+  --stack-b: #ffe600;
+  --stack-c: #00e676;
+  --stack-d: #3dc9ff;
+}
+
+.stack-tab[data-tone="3"] {
+  --stack-a: #00e676;
+  --stack-b: #3dc9ff;
+  --stack-c: #7b1fff;
+  --stack-d: #ff3cf0;
+}
+
+.stack-tab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--spin),
+    var(--stack-a),
+    var(--stack-b),
+    var(--stack-c),
+    var(--stack-d),
+    var(--stack-a)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ident-spin 10s linear infinite reverse;
+  pointer-events: none;
+}
+
+.stack-tab-face {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  -webkit-text-stroke: 0.5px #000;
+  text-shadow: 0 1px 0 #000;
+}
+
+.stack-tab-on {
+  background: transparent;
+}
+
+.stack-tab-on::before {
+  display: none;
+}
+
+.stack-tab-on .stack-tab-face {
+  background-image: linear-gradient(
+    118deg,
+    var(--stack-a),
+    var(--stack-b),
+    var(--stack-c),
+    var(--stack-d),
+    var(--stack-a)
+  );
+  background-size: 220% 220%;
+  animation: bookmark-flag 2.8s ease-in-out infinite;
+}
+
+.stack-tab-add {
+  min-width: 28px;
+  padding: 1px;
+}
+
+.swipe-save-label {
+  background-image: linear-gradient(90deg, #ff1e32, #ff6a00);
+  background-size: 200% 200%;
+  animation: bookmark-flag 2.4s ease-in-out infinite;
+  color: #140404;
+}
+
+.swipe-peek-label {
+  background-image: linear-gradient(90deg, #3dc9ff, #00e676);
+  background-size: 200% 200%;
+  animation: bookmark-flag 2.4s ease-in-out infinite;
+  color: #041014;
 }
 
 @media (prefers-reduced-motion: reduce) {

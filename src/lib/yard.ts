@@ -308,7 +308,20 @@ export function toggleFav(id: string) {
   return next;
 }
 
-export function customIds(): string[] {
+export function setFavOrder(ids: string[]) {
+  if (!canStore()) return;
+  localStorage.setItem(FAV_KEY, JSON.stringify(ids));
+}
+
+export type YardStack = { id: string; name: string; ids: string[] };
+const STACKS_KEY = "appendix-stacks";
+
+function writeStacks(stacks: YardStack[]) {
+  if (!canStore()) return;
+  localStorage.setItem(STACKS_KEY, JSON.stringify(stacks));
+}
+
+function legacyCustomIds(): string[] {
   if (!canStore()) return [];
   try {
     return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]") as string[];
@@ -317,21 +330,77 @@ export function customIds(): string[] {
   }
 }
 
+export function listStacks(): YardStack[] {
+  if (!canStore()) return [{ id: "my-stack", name: "My stack", ids: [] }];
+  try {
+    const raw = JSON.parse(localStorage.getItem(STACKS_KEY) || "null") as YardStack[] | null;
+    if (Array.isArray(raw) && raw.length) {
+      return raw.filter((s) => s && typeof s.id === "string" && typeof s.name === "string" && Array.isArray(s.ids));
+    }
+  } catch {
+    /* migrate */
+  }
+  const migrated: YardStack[] = [
+    {
+      id: "my-stack",
+      name: localStorage.getItem(CUSTOM_NAME_KEY) || "My stack",
+      ids: legacyCustomIds(),
+    },
+  ];
+  writeStacks(migrated);
+  return migrated;
+}
+
+export function addStack(name = "New stack") {
+  const stacks = listStacks();
+  const id = `stack-${Date.now()}`;
+  const next = [...stacks, { id, name: name.trim() || "New stack", ids: [] as string[] }];
+  writeStacks(next);
+  return next;
+}
+
+export function renameStack(id: string, name: string) {
+  const stacks = listStacks().map((s) => (s.id === id ? { ...s, name: name.trim() || s.name } : s));
+  writeStacks(stacks);
+  return stacks;
+}
+
+export function deleteStack(id: string) {
+  const next = listStacks().filter((s) => s.id !== id);
+  writeStacks(next.length ? next : [{ id: "my-stack", name: "My stack", ids: [] }]);
+  return listStacks();
+}
+
+export function toggleInStack(stackId: string, appId: string) {
+  const stacks = listStacks().map((s) => {
+    if (s.id !== stackId) return s;
+    const ids = s.ids.includes(appId) ? s.ids.filter((x) => x !== appId) : [...s.ids, appId];
+    return { ...s, ids };
+  });
+  writeStacks(stacks);
+  return stacks.find((s) => s.id === stackId)?.ids || [];
+}
+
+export function setStackOrder(stackId: string, ids: string[]) {
+  writeStacks(listStacks().map((s) => (s.id === stackId ? { ...s, ids } : s)));
+}
+
+export function customIds(): string[] {
+  return listStacks()[0]?.ids || [];
+}
+
 export function customName() {
-  if (!canStore()) return "My stack";
-  return localStorage.getItem(CUSTOM_NAME_KEY) || "My stack";
+  return listStacks()[0]?.name || "My stack";
 }
 
 export function setCustomName(name: string) {
-  if (!canStore()) return;
-  localStorage.setItem(CUSTOM_NAME_KEY, name.trim() || "My stack");
+  const first = listStacks()[0];
+  if (first) renameStack(first.id, name);
 }
 
 export function toggleCustom(id: string) {
-  if (!canStore()) return customIds();
-  const next = customIds().includes(id) ? customIds().filter((x) => x !== id) : [...customIds(), id];
-  localStorage.setItem(CUSTOM_KEY, JSON.stringify(next));
-  return next;
+  const first = listStacks()[0];
+  return first ? toggleInStack(first.id, id) : [];
 }
 
 export function setSavedOrder(ids: string[]) {

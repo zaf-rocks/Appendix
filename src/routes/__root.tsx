@@ -33,7 +33,7 @@ export const Route = createRootRoute({
     ],
   }),
   component: () => (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" data-lens="all" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

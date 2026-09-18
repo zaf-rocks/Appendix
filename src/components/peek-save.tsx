@@ -1,14 +1,15 @@
 import { Bookmark, Star } from "lucide-react";
+import { useState } from "react";
 import { AppIcon } from "@/components/app-icon";
 import type { AppEntry } from "@/lib/catalog";
-import { customIds, customName, favIds, isSaved, toggleCustom, toggleFav, toggleSave } from "@/lib/yard";
+import { favIds, isSaved, listStacks, toggleFav, toggleInStack, toggleSave } from "@/lib/yard";
 import { cn } from "@/lib/cn";
 
 export function PeekSave({ app, onClose }: { app: AppEntry; onClose: () => void }) {
+  const [, bump] = useState(0);
   const saved = isSaved(app.id);
   const fav = favIds().includes(app.id);
-  const custom = customIds().includes(app.id);
-  const stack = customName();
+  const stacks = listStacks();
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/65 p-3 pb-24" onClick={onClose}>
@@ -23,23 +24,25 @@ export function PeekSave({ app, onClose }: { app: AppEntry; onClose: () => void 
             </p>
           </div>
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
+        <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-3">
           <button
             type="button"
             onClick={() => {
-              toggleSave(app.id);
+              if (saved) toggleSave(app.id);
+              bump((n) => n + 1);
               onClose();
             }}
             className={cn("rounded-xl p-3 ring-1 ring-border", saved && "bg-cat-amber text-black")}
           >
             <Bookmark className="mx-auto mb-1 size-4" />
-            {saved ? "Bookmarked" : "Bookmark"}
+            {saved ? "Remove bookmark" : "Bookmark"}
           </button>
           <button
             type="button"
             onClick={() => {
               if (!isSaved(app.id)) toggleSave(app.id);
               toggleFav(app.id);
+              bump((n) => n + 1);
               onClose();
             }}
             className={cn("rounded-xl p-3 ring-1 ring-border", fav && "bg-cat-amber text-black")}
@@ -47,17 +50,24 @@ export function PeekSave({ app, onClose }: { app: AppEntry; onClose: () => void 
             <Star className="mx-auto mb-1 size-4" />
             {fav ? "In Favorites" : "Favorite"}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (!isSaved(app.id)) toggleSave(app.id);
-              toggleCustom(app.id);
-              onClose();
-            }}
-            className={cn("rounded-xl p-3 ring-1 ring-border", custom && "bg-cat-amber text-black")}
-          >
-            {custom ? `In ${stack}` : `Add to ${stack}`}
-          </button>
+          {stacks.map((s) => {
+            const on = s.ids.includes(app.id);
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => {
+                  if (!isSaved(app.id)) toggleSave(app.id);
+                  toggleInStack(s.id, app.id);
+                  bump((n) => n + 1);
+                  onClose();
+                }}
+                className={cn("rounded-xl p-3 ring-1 ring-border", on && "bg-cat-amber text-black")}
+              >
+                {on ? `In ${s.name}` : `Add to ${s.name}`}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

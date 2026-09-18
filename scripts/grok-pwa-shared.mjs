@@ -176,6 +176,21 @@ export function renderWebManifest(hostHeader) {
           type: "image/png",
         },
       ],
+      shortcuts: [
+        {
+          name: "Bookmarks",
+          short_name: "Bookmarks",
+          description: "The ones you meant to keep.",
+          url: "/saved",
+          icons: [
+            {
+              src: "/__grok/icon-180.png",
+              sizes: "180x180",
+              type: "image/png",
+            },
+          ],
+        },
+      ],
     },
     null,
     2,
