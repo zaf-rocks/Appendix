@@ -387,6 +387,12 @@ html[data-lens="vibe"] body {
   max-height: 242px;
 }
 
+.hero-band-primer {
+  height: 46dvh;
+  min-height: 320px;
+  max-height: 420px;
+}
+
 .hero-sill {
   height: 1.4px;
   background-image: var(--spec);
@@ -452,6 +458,13 @@ html[data-lens="vibe"] body {
   to {
     background-position: 100% 50%;
   }
+}
+
+button.letter-tab {
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
 
 .letter-tab {

@@ -1,11 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StoreShell } from "@/components/store-shell";
 import { GENRE_META, GENRES, PLATFORMS, type Genre } from "@/lib/catalog";
 import { addListingTags, myListings, submitListing } from "@/lib/store-api";
 import { awardFlints } from "@/lib/well-api";
+import { takeFileDraft } from "@/lib/file-draft";
 import { addFlints } from "@/lib/yard";
-import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "@/lib/cn";
 
@@ -33,6 +33,18 @@ function Studio() {
 
   useEffect(() => {
     if (!user) return;
+    const draft = takeFileDraft();
+    if (!draft) return;
+    if (draft.name) setName(draft.name);
+    if (draft.line) setTagline(draft.line);
+    if (draft.url) {
+      setUrl(draft.url);
+      setComingSoon(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
     void myListings()
       .then(setMine)
       .catch(() => setMine([]));
@@ -45,7 +57,7 @@ function Studio() {
       </StoreShell>
     );
   }
-  if (!user) return <RedirectToSignIn />;
+  if (!user) return <Navigate to="/login" search={{ next: "studio" }} />;
 
   const me = user;
 

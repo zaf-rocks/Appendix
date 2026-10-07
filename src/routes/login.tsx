@@ -1,15 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlayShell } from "@/components/play-shell";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { peekFileDraft } from "@/lib/file-draft";
 
-export const Route = createFileRoute("/login")({ component: Login });
+type LoginSearch = { next?: "studio" };
+
+export const Route = createFileRoute("/login")({
+  validateSearch: (raw: Record<string, unknown>): LoginSearch => ({
+    next: raw.next === "studio" ? "studio" : undefined,
+  }),
+  component: Login,
+});
 
 function Login() {
+  const { next } = Route.useSearch();
+  const filing = next === "studio";
+  const dest = filing ? "/studio" : "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"in" | "up">("in");
   const [err, setErr] = useState<string | null>(null);
+  const [kept, setKept] = useState(false);
+
+  useEffect(() => {
+    setKept(peekFileDraft());
+  }, []);
 
   async function onEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -26,23 +42,26 @@ function Login() {
         const { error } = await authClient.signIn.email({ email, password });
         if (error) throw new Error(error.message);
       }
-      window.location.assign("/");
+      window.location.assign(dest);
     } catch (ex) {
       setErr(ex instanceof Error ? ex.message : "Sign-in failed");
     }
   }
 
   return (
-    <PlayShell heroTitle="Identity" heroLine="Sign in to file, claim, earn Flints. Guests still browse.">
+    <PlayShell
+      heroTitle="Identity"
+      heroLine={filing ? "Sign in to file an app. Guests still browse." : "Sign in to file, claim, earn Flints. Guests still browse."}
+    >
       <div className="space-y-4">
         <Link to="/" className="text-sm text-muted">
           Back to the scrapyard
         </Link>
-        <h1 className="font-display text-2xl font-semibold">Sign in to file an app</h1>
+        <h1 className="font-display text-2xl font-semibold">{filing ? "Sign in to file an app" : "Sign in"}</h1>
         <p className="text-sm text-muted">
-          Guests browse free. Publishing takes an account. Google, X, or email —
-          GitHub and Facebook are not on this stack (the door only opens those
-          three ways).
+          {kept
+            ? "Name, link, and the sentence are waiting in Studio."
+            : "Guests browse free. Publishing takes an account. Google, X, or email — GitHub and Facebook are not on this stack (the door only opens those three ways)."}
         </p>
         {authEnabled ? (
           <>
@@ -50,7 +69,7 @@ function Login() {
               <button
                 key={p.providerId}
                 type="button"
-                onClick={() => signIn(p.providerId, { callbackURL: "/" })}
+                onClick={() => signIn(p.providerId, { callbackURL: dest })}
                 className="h-12 w-full rounded-full border border-border bg-surface text-sm font-medium hover:bg-raised"
               >
                 Continue with {p.label}

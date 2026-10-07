@@ -1,6 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Bell, Bookmark, Coins, Factory, Gamepad2, House, Search, Users, CircleUser } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FileChip, FileSlip } from "@/components/file-door";
+import { AboutChip, Primer } from "@/components/primer";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { SEED } from "@/lib/catalog";
 import { useLens } from "@/lib/lens";
@@ -63,6 +65,8 @@ export function PlayShell({
   const { user, isPending } = useCurrentUserState();
   const { lens, setLens } = useLens();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const [fileOpen, setFileOpen] = useState(false);
+  const [primer, setPrimer] = useState<"wait" | "on" | "off">("wait");
   const drum = useRef<number[]>([]);
   const markRef = useRef<HTMLButtonElement>(null);
   const homeTap = useRef(0);
@@ -74,6 +78,35 @@ export function PlayShell({
   const alertsOn = path === "/alerts";
   const letter = (user?.displayName || user?.primaryEmail || "").trim().charAt(0).toUpperCase();
   const n = throughLens(SEED, lens).length;
+  const hideFile = path === "/login" || path === "/studio" || path === "/well" || path.startsWith("/app/");
+
+  useEffect(() => {
+    setFileOpen(false);
+  }, [path]);
+
+  useEffect(() => {
+    try {
+      setPrimer(localStorage.getItem("appendix-primer-seen") === "1" ? "off" : "on");
+    } catch {
+      setPrimer("on");
+    }
+  }, []);
+
+  function dismissPrimer() {
+    try {
+      localStorage.setItem("appendix-primer-seen", "1");
+    } catch {
+      /* private mode */
+    }
+    setPrimer("off");
+  }
+
+  function openFileSlip() {
+    setFileOpen(true);
+    requestAnimationFrame(() => {
+      document.getElementById("file-slip")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
 
   useEffect(() => {
     const el = markRef.current;
@@ -93,7 +126,7 @@ export function PlayShell({
 
   return (
     <div className="min-h-dvh bg-bg text-fg">
-      <header className="hero-band relative">
+      <header className={cn("hero-band relative", home && primer === "on" && "hero-band-primer")}>
         <div className="absolute inset-0 overflow-hidden">
         <video
           key={hero.mp4}
@@ -185,6 +218,9 @@ export function PlayShell({
             </Link>
           </div>
         </div>
+        {home && primer === "on" ? (
+          <Primer signedIn={Boolean(user)} onClose={dismissPrimer} onFile={openFileSlip} />
+        ) : (
         <div className="absolute inset-x-0 bottom-2.5 z-10 flex items-baseline justify-between gap-2 pl-3 pr-0">
           {home && (rail || "a") === "a" ? (
             <p className="hero-count shrink-0">
@@ -201,11 +237,16 @@ export function PlayShell({
             <p className={cn("hero-tag min-w-0 flex-1 truncate text-right", savedOn && "bookmark-hero-tag")}>{heroLine || ""}</p>
           )}
         </div>
+        )}
       </header>
 
       {letters ? (
         <>
           <div className="no-bar flex gap-1 overflow-x-auto px-2 pt-1 pb-0">
+          {hideFile ? null : (
+            <FileChip signedIn={Boolean(user)} open={fileOpen} onOpen={() => setFileOpen((v) => !v)} />
+          )}
+          {home && primer === "off" ? <AboutChip onOpen={() => setPrimer("on")} /> : null}
           {LETTERS.map((l, i) => (
             <Link
               key={l.id}
@@ -221,7 +262,13 @@ export function PlayShell({
         </div>
           <div className="hero-sill hero-sill-b mt-1.5" />
         </>
-      ) : null}
+      ) : hideFile ? null : (
+        <div className="no-bar flex gap-1 overflow-x-auto px-2 pt-1 pb-1">
+          <FileChip signedIn={Boolean(user)} open={fileOpen} onOpen={() => setFileOpen((v) => !v)} />
+        </div>
+      )}
+
+      {fileOpen && !user && !hideFile ? <FileSlip /> : null}
 
       <main className="px-3 pt-0 pb-36">{children}</main>
 
