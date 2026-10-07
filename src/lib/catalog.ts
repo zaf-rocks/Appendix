@@ -52,6 +52,7 @@ export type AppEntry = {
   ownerId?: string;
   provenance?: "vibe" | "pro";
   roles?: string[];
+  tags?: string[];
 };
 
 export const GENRE_META: Record<Genre, { label: string; hint: string; tone: string }> = {

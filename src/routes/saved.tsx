@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { PlayShell } from "@/components/play-shell";
 import { RankList } from "@/components/rails";
-import { listStore } from "@/lib/store-api";
+import { listStore, myBookmarks, setBookmark } from "@/lib/store-api";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
   addStack,
   deleteStack,
@@ -15,6 +16,7 @@ import {
   setSavedOrder,
   setStackOrder,
 } from "@/lib/yard";
+import { specVars } from "@/lib/spectrum";
 import { cn } from "@/lib/cn";
 
 export const Route = createFileRoute("/saved")({
@@ -24,22 +26,28 @@ export const Route = createFileRoute("/saved")({
 
 type Tab = { id: string; label: string };
 
-function tabLabel(text: string) {
-  const t = text.trim() || "Stack";
-  return (
-    <>
-      <span className="text-[12px] leading-none">{t[0]}</span>
-      <span className="text-[9px] leading-none tracking-wide uppercase">{t.slice(1)}</span>
-    </>
-  );
-}
-
 export function Saved() {
   const catalog = Route.useLoaderData();
+  const { user } = useCurrentUserState();
   const [tab, setTab] = useState("all");
   const [q, setQ] = useState("");
   const [stacks, setStacks] = useState(() => listStacks());
   const [, bump] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const local = savedIds();
+    void myBookmarks()
+      .then(async (remote) => {
+        const merged = [...new Set([...remote, ...local])];
+        for (const id of local) {
+          if (!remote.includes(id)) await setBookmark({ data: { listingId: id, on: true } });
+        }
+        if (merged.length) setSavedOrder(merged);
+        bump((n) => n + 1);
+      })
+      .catch(() => {});
+  }, [user]);
 
   const ids =
     tab === "all" ? savedIds() : tab === "fav" ? favIds() : stacks.find((s) => s.id === tab)?.ids || [];
@@ -66,24 +74,17 @@ export function Saved() {
 
   return (
     <PlayShell heroTitle="Bookmarks" heroLine="Not downloads. The ones you meant to keep.">
-      <label className="bookmark-search">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search bookmarks"
-        />
-        <Search className="bookmark-search-icon" aria-hidden />
-      </label>
-      <div className="mt-2 flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1">
         {tabs.map((t, i) => (
           <button
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
             data-tone={String((i % 3) + 1)}
+            style={specVars(i + 6)}
             className={cn("stack-tab", tab === t.id && "stack-tab-on")}
           >
-            <span className="stack-tab-face">{tabLabel(t.label)}</span>
+            <span className="stack-tab-face">{t.label}</span>
           </button>
         ))}
         <button
@@ -98,6 +99,14 @@ export function Saved() {
           <span className="stack-tab-face">+</span>
         </button>
       </div>
+      <label className="bookmark-search mt-2">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search bookmarks"
+        />
+        <Search className="bookmark-search-icon" aria-hidden />
+      </label>
       {activeStack ? (
         <div className="mt-2 flex gap-2">
           <input

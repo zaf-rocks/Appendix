@@ -5,7 +5,7 @@ const OPEN_KEY = "appendix-opens";
 const SAVE_KEY = "appendix-saves";
 const FLINT_KEY = "appendix-flints";
 const DESK_KEY = "appendix-desk-open";
-const SLOTS_KEY = "appendix-desk-slots";
+const SLOTS_KEY = "appendix-desk-slots-b";
 const REVIEW_N_KEY = "appendix-reviews-filed";
 const BILLBOARD_KEY = "appendix-billboard";
 const REPORT_KEY = "appendix-reports";
@@ -13,6 +13,15 @@ const PAY_KEY = "appendix-pays-billboard";
 
 export const FLINT_BILLBOARD_COST = 24;
 export const DESK_SIT_MS = 120000;
+export const DWELL_FLOOR_MS = 45_000;
+export const DWELL_DEEP_MS = 120_000;
+
+const DEPART_KEY = "appendix-depart";
+const DWELL_KEY = "appendix-dwell";
+const INBOX_KEY = "appendix-inbox";
+const OUTBOX_KEY = "appendix-outbox";
+const BIN_KEY = "appendix-bin";
+const NEVER_KEY = "appendix-never";
 
 function canStore() {
   return typeof localStorage !== "undefined";
@@ -30,6 +39,110 @@ function readMap(key: string): Record<string, number> {
 function writeMap(key: string, value: Record<string, number>) {
   if (!canStore()) return;
   localStorage.setItem(key, JSON.stringify(value));
+}
+
+export function dwellOf(id: string) {
+  return readMap(DWELL_KEY)[id] || 0;
+}
+
+export function markDepart(id: string) {
+  const map = readMap(DEPART_KEY);
+  map[id] = Date.now();
+  writeMap(DEPART_KEY, map);
+}
+
+export function noteReturn(id: string) {
+  const depart = readMap(DEPART_KEY)[id];
+  if (!depart) return dwellOf(id);
+  const ms = Math.max(0, Date.now() - depart);
+  const map = readMap(DWELL_KEY);
+  map[id] = Math.max(map[id] || 0, ms);
+  writeMap(DWELL_KEY, map);
+  const left = readMap(DEPART_KEY);
+  delete left[id];
+  writeMap(DEPART_KEY, left);
+  return map[id];
+}
+
+export function lookPay(ms: number) {
+  if (ms < DWELL_FLOOR_MS) return 0;
+  if (ms < DWELL_DEEP_MS) return 1;
+  return 2;
+}
+
+export function notePay(len: number) {
+  if (len >= 200) return 2;
+  if (len >= 75) return 1;
+  return 0;
+}
+
+export function reviewPay(ms: number, rating: number, publicLen: number, privateLen: number, desk = false) {
+  if (!rating || ms < DWELL_FLOOR_MS) return 0;
+  const stars = lookPay(ms) * (desk ? 2 : 1);
+  return stars + notePay(publicLen) + notePay(privateLen);
+}
+
+function readIds(key: string): string[] {
+  if (!canStore()) return [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(key) || "[]") as string[];
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeIds(key: string, ids: string[]) {
+  if (!canStore()) return;
+  localStorage.setItem(key, JSON.stringify([...new Set(ids)]));
+}
+
+export function neverIds() {
+  return readIds(NEVER_KEY);
+}
+
+export function inboxIds() {
+  const never = new Set(neverIds());
+  return readIds(INBOX_KEY).filter((id) => !never.has(id));
+}
+
+export function outboxItems(): { id: string; flints: number }[] {
+  if (!canStore()) return [];
+  try {
+    const raw = JSON.parse(localStorage.getItem(OUTBOX_KEY) || "[]") as { id: string; flints: number }[];
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+export function binIds() {
+  return readIds(BIN_KEY);
+}
+
+export function sendToInbox(id: string) {
+  if (neverIds().includes(id)) return false;
+  writeIds(BIN_KEY, binIds().filter((x) => x !== id));
+  writeIds(INBOX_KEY, [id, ...inboxIds().filter((x) => x !== id)]);
+  return true;
+}
+
+export function finishOutbox(id: string, flints: number) {
+  writeIds(INBOX_KEY, inboxIds().filter((x) => x !== id));
+  const next = [{ id, flints }, ...outboxItems().filter((x) => x.id !== id)].slice(0, 40);
+  if (canStore()) localStorage.setItem(OUTBOX_KEY, JSON.stringify(next));
+}
+
+export function binApp(id: string, never: boolean) {
+  writeIds(INBOX_KEY, inboxIds().filter((x) => x !== id));
+  if (never) writeIds(NEVER_KEY, [id, ...neverIds()]);
+  else writeIds(BIN_KEY, [id, ...binIds().filter((x) => x !== id)]);
+}
+
+export function restoreBin(id: string) {
+  writeIds(BIN_KEY, binIds().filter((x) => x !== id));
+  writeIds(NEVER_KEY, neverIds().filter((x) => x !== id));
+  writeIds(INBOX_KEY, [id, ...inboxIds().filter((x) => x !== id)]);
 }
 
 export function bumpOpen(id: string) {
@@ -118,38 +231,23 @@ function writeSlots(slots: Slot[]) {
   localStorage.setItem(SLOTS_KEY, JSON.stringify(slots.slice(0, 3)));
 }
 
-function pool(catalog: AppEntry[]) {
-  const done = new Set(doneIds());
-  const live = catalog.filter((a) => isUp(a) && !done.has(a.id));
-  const sponsored = live.filter((a) => a.sponsored);
-  const rest = live.filter((a) => !sponsored.some((s) => s.id === a.id));
-  return { live, sponsored: sponsored.length ? sponsored : live, rest: rest.length ? rest : live };
-}
-
 function pick(from: AppEntry[], exclude: Set<string>) {
   const ok = from.filter((a) => !exclude.has(a.id));
   if (!ok.length) return from[Math.floor(Math.random() * from.length)];
   return ok[Math.floor(Math.random() * ok.length)];
 }
 
+function livePool(catalog: AppEntry[]) {
+  const done = new Set(doneIds());
+  return catalog.filter((a) => isUp(a) && !done.has(a.id));
+}
+
 function fillThree(catalog: AppEntry[], current: Slot[]): Slot[] {
-  const { sponsored, rest, live } = pool(catalog);
-  const slots = current.filter((s) => live.some((a) => a.id === s.id)).slice(0, 3);
+  const source = livePool(catalog);
+  const slots = current.filter((s) => source.some((a) => a.id === s.id)).slice(0, 3);
   const used = new Set(slots.map((s) => s.id));
-  while (slots.filter((s) => s.kind === "s").length < 2 && slots.length < 3) {
-    const a = pick(sponsored, used);
-    if (!a) break;
-    used.add(a.id);
-    slots.push({ id: a.id, kind: "s" });
-  }
   while (slots.length < 3) {
-    const a = pick(rest, used);
-    if (!a) break;
-    used.add(a.id);
-    slots.push({ id: a.id, kind: "r" });
-  }
-  while (slots.length < 3 && live.length) {
-    const a = pick(live, used);
+    const a = pick(source, used);
     if (!a) break;
     used.add(a.id);
     slots.push({ id: a.id, kind: "r" });
@@ -168,11 +266,10 @@ export function replaceDeskSlot(id: string, catalog: AppEntry[]): AppEntry[] {
   const slots = readSlots();
   const i = slots.findIndex((s) => s.id === id);
   if (i < 0) return deskTickets(catalog);
-  const { sponsored, rest, live } = pool(catalog);
+  const source = livePool(catalog);
   const used = new Set(slots.filter((_, n) => n !== i).map((s) => s.id));
-  const kind = slots[i].kind;
-  const a = pick(kind === "s" ? sponsored : rest, used) || pick(live, used);
-  if (a) slots[i] = { id: a.id, kind };
+  const a = pick(source, used);
+  if (a) slots[i] = { id: a.id, kind: "s" };
   writeSlots(slots);
   return deskTickets(catalog);
 }
@@ -242,6 +339,7 @@ export function isReported(id: string) {
 }
 
 const SKIP_KEY = "appendix-desk-skips";
+const SKIPPED_IDS_KEY = "appendix-skipped";
 const DONE_KEY = "appendix-desk-done";
 const FAV_KEY = "appendix-favs";
 const CUSTOM_KEY = "appendix-custom";
@@ -268,12 +366,17 @@ export function skipState(): { n: number; date: string; left: number } {
   }
 }
 
+export function skippedIds(): string[] {
+  return readIds(SKIPPED_IDS_KEY);
+}
+
 export function skipDesk(id: string, catalog: AppEntry[]): { ok: boolean; tickets: AppEntry[]; reason?: string } {
   const s = skipState();
   if (s.left <= 0) {
     return { ok: false, tickets: deskTickets(catalog), reason: "Three skips today. Resets at midnight." };
   }
   if (canStore()) localStorage.setItem(SKIP_KEY, JSON.stringify({ date: todayKey(), n: s.n + 1 }));
+  writeIds(SKIPPED_IDS_KEY, [id, ...skippedIds().filter((x) => x !== id)].slice(0, 40));
   return { ok: true, tickets: replaceDeskSlot(id, catalog) };
 }
 

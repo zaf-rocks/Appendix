@@ -23,10 +23,10 @@ const PLANS = [
 
 function Advertise() {
   return (
-    <PlayShell heroTitle="Sponsor the yard" heroLine="You’re not buying a download. You’re buying eyes and honest sit-downs.">
+    <PlayShell heroTitle="Sponsor Appendix" heroLine="You’re not buying a download. You’re buying eyes and honest sit-downs.">
       <p className="text-[13px] text-muted">
-        The Desk is three chairs, always. Two from the paid pool, one from the yard.
-        $4.99/mo buys a sponsored Home tile. $19.99/mo puts you in the Desk pool.
+        The Desk is three apps from the index until real sponsors exist. Then we decide the mix.
+        $4.99/mo buys a sponsored Home tile. $19.99/mo is the Desk pool, when that pool is turned on.
         Flints redeem a week of that visibility. Paying buys eyes, not stars.
       </p>
       <ul className="mt-4 space-y-3">

@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StoreShell } from "@/components/store-shell";
 import { GENRE_META, GENRES, PLATFORMS, type Genre } from "@/lib/catalog";
-import { myListings, submitListing } from "@/lib/store-api";
+import { addListingTags, myListings, submitListing } from "@/lib/store-api";
+import { awardFlints } from "@/lib/well-api";
+import { addFlints } from "@/lib/yard";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { cn } from "@/lib/cn";
@@ -24,6 +26,7 @@ function Studio() {
   const [iconUrl, setIconUrl] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [screenshots, setScreenshots] = useState("");
+  const [tagText, setTagText] = useState("");
   const [installable, setInstallable] = useState(true);
   const [offline, setOffline] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -50,7 +53,7 @@ function Studio() {
     e.preventDefault();
     setMsg(null);
     try {
-      await submitListing({
+      const filed = await submitListing({
         data: {
           name,
           tagline,
@@ -68,11 +71,29 @@ function Studio() {
           offline,
         },
       });
-      setName("");
+      if (filed.duplicate) {
+        setMsg("That link is already on the shelf. We kept the first one.");
+        return;
+      }
+      let bonus = 0;
+      if (description.trim().length > 40) bonus += 1;
+      if (genres.length) bonus += 1;
+      const shots = screenshots.split(/[\s,]+/).filter((s) => s.startsWith("http"));
+      if (shots.length >= 3) bonus += 1;
+      if (bonus) {
+        await awardFlints({ data: { amount: bonus, reason: `file:${filed.id}` } });
+        addFlints(bonus);
+      }
+      const uploaded = await awardFlints({ data: { amount: 3, reason: `upload:${filed.id}` } });
+      if (!uploaded.already) addFlints(3);
+      if (filed.id && tagText.trim()) {
+        await addListingTags({ data: { listingId: filed.id, tags: tagText.split(",") } });
+      }
+      setTagText("");
       setTagline("");
       setDescription("");
       setUrl("");
-      setMsg("Listed. No APK was harmed in this publishing.");
+      setMsg("Filed. Sitting in the queue — not on the shelf yet.");
       setMine(await myListings());
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Could not publish");
@@ -140,6 +161,12 @@ function Studio() {
           label="Screenshot URLs (comma separated)"
           value={screenshots}
           onChange={setScreenshots}
+        />
+        <Field
+          label="Tags, comma separated. Emoji allowed. Up to 10."
+          value={tagText}
+          onChange={setTagText}
+          placeholder="karaoke, 🎤, offline"
         />
         <Field
           label="Contact email for claims / review"

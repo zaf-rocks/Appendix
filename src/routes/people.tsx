@@ -6,6 +6,7 @@ import { listStore } from "@/lib/store-api";
 import { useLens } from "@/lib/lens";
 import { throughLens } from "@/lib/provenance";
 import { cn } from "@/lib/cn";
+import { specVars } from "@/lib/spectrum";
 
 type Search = { rail?: string; sub?: string };
 
@@ -22,23 +23,23 @@ function Chip({
   to,
   search,
   on,
+  i,
   children,
 }: {
   to: "/people";
   search: Search;
   on: boolean;
+  i: number;
   children: string;
 }) {
   return (
     <Link
       to={to}
       search={search}
-      className={cn(
-        "h-6 shrink-0 rounded-full px-2.5 text-[10px] leading-6 whitespace-nowrap",
-        on ? "bg-fg text-bg" : "bg-raised text-muted",
-      )}
+      style={specVars(i + 20)}
+      className={cn("spec-pick", on && "spec-pick-on")}
     >
-      {children}
+      <span className="spec-pick-face">{children}</span>
     </Link>
   );
 }
@@ -57,24 +58,25 @@ function People() {
   return (
     <PlayShell heroTitle="Crowds" heroLine="Who is this useful to — not what genre the store clerk invented.">
       <div className="-mx-3 flex gap-1 overflow-x-auto px-3 pb-1">
-        {plain.map((a) => (
-          <Chip key={a.id} to="/people" search={{ rail: a.id }} on={a.id === active.id}>
+        {plain.map((a, i) => (
+          <Chip key={a.id} i={i} to="/people" search={{ rail: a.id }} on={a.id === active.id}>
             {a.label}
           </Chip>
         ))}
       </div>
       <div className="-mx-3 flex gap-1 overflow-x-auto px-3 pb-1">
-        {nested.map((a) => (
-          <Chip key={a.id} to="/people" search={{ rail: a.id }} on={a.id === active.id}>
+        {nested.map((a, i) => (
+          <Chip key={a.id} i={i + 8} to="/people" search={{ rail: a.id }} on={a.id === active.id}>
             {a.label}
           </Chip>
         ))}
       </div>
       {subtypes.length ? (
         <div className="-mx-3 flex gap-1 overflow-x-auto px-3 pb-1">
-          {subtypes.map((s) => (
+          {subtypes.map((s, i) => (
             <Chip
               key={s.id}
+              i={i + 16}
               to="/people"
               search={{ rail: active.id, sub: s.id }}
               on={sub === s.id}

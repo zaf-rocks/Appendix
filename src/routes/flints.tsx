@@ -2,28 +2,70 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { PlayShell } from "@/components/play-shell";
 import { AppIcon } from "@/components/app-icon";
-import { StatusDot } from "@/components/store-shell";
 import { isUp } from "@/lib/catalog";
 import { listStore } from "@/lib/store-api";
 import {
-  FLINT_PROMO_COST,
+  binApp,
+  binIds,
   deskTickets,
+  doneIds,
   flintBalance,
   flintOnboarded,
+  inboxIds,
   markDeskOpen,
+  outboxItems,
   redeemPromo,
+  restoreBin,
   setFlintOnboarded,
   skipDesk,
   skipState,
+  skippedIds,
 } from "@/lib/yard";
 import type { AppEntry } from "@/lib/catalog";
 import { useLens } from "@/lib/lens";
 import { throughLens } from "@/lib/provenance";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { myFlintBalance, startSponsor } from "@/lib/well-api";
+import { specTri, specVars } from "@/lib/spectrum";
 import { cn } from "@/lib/cn";
 
 const PLATS = ["Grok", "Lovable", "Bolt", "v0", "Replit", "Bubble", "Glide", "Softr", "Emergent", "ChatGPT", "Gemini", "Cursor"];
 const CATS = ["Games", "Tools", "Music", "Photo", "Business", "Education", "Social", "Health"];
+
+function SpecBtn({
+  i,
+  on,
+  children,
+  onClick,
+}: {
+  i: number;
+  on?: boolean;
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
+  const [c1, c2, c3] = specTri(i);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn("spec-pick", on && "spec-pick-on")}
+      style={{ ["--c1" as string]: c1, ["--c2" as string]: c2, ["--c3" as string]: c3 }}
+    >
+      <span className="spec-pick-face">{children}</span>
+    </button>
+  );
+}
+
+const RACKS = [
+  { id: "inbox", label: "Inbox" },
+  { id: "random", label: "Index" },
+  { id: "paid", label: "Paid" },
+  { id: "flint", label: "Flint" },
+  { id: "skipped", label: "Skipped" },
+  { id: "done", label: "Done" },
+] as const;
+
+type RackId = (typeof RACKS)[number]["id"];
 
 export const Route = createFileRoute("/flints")({
   loader: () => listStore(),
@@ -39,13 +81,18 @@ function Flints() {
   const [tickets, setTickets] = useState<AppEntry[]>([]);
   const [note, setNote] = useState<string | null>(null);
   const [skips, setSkips] = useState(3);
-  const [monitor, setMonitor] = useState<"off" | "how" | "redeem" | "dev" | "price">("off");
   const [onboard, setOnboard] = useState(0);
   const [heard, setHeard] = useState<string[]>([]);
   const [used, setUsed] = useState<string[]>([]);
   const [other, setOther] = useState("");
   const [cats, setCats] = useState<string[]>([]);
-  const [readyOnboard, setReadyOnboard] = useState(false);
+  const [readyOnboard, setReadyOnboard] = useState<boolean | null>(null);
+  const [inbox, setInbox] = useState<string[]>([]);
+  const [outbox, setOutbox] = useState<{ id: string; flints: number }[]>([]);
+  const [bin, setBin] = useState<string[]>([]);
+  const [skipped, setSkipped] = useState<string[]>([]);
+  const [done, setDone] = useState<string[]>([]);
+  const [screen, setScreen] = useState<RackId | null>(null);
 
   const live = useMemo(() => catalog.filter(isUp), [catalog]);
 
@@ -54,18 +101,30 @@ function Flints() {
     setTickets(deskTickets(live.length ? live : catalog));
     setSkips(skipState().left);
     setReadyOnboard(flintOnboarded());
-  }, [catalog, live]);
+    setInbox(inboxIds());
+    setOutbox(outboxItems());
+    setBin(binIds());
+    setSkipped(skippedIds());
+    setDone(doneIds());
+    if (user) {
+      void myFlintBalance()
+        .then((r) => setN(r.n || flintBalance()))
+        .catch(() => setN(flintBalance()));
+    }
+  }, [catalog, live, user]);
 
   function skip(id: string) {
     const r = skipDesk(id, live.length ? live : catalog);
     setTickets(r.tickets);
     setSkips(skipState().left);
+    setSkipped(skippedIds());
     setNote(r.ok ? null : r.reason || null);
   }
 
   function redeem() {
     const r = redeemPromo();
     setN(flintBalance());
+    if (r.ok) void startSponsor({ data: { listingId: "yard", kind: "flint", days: 7 } });
     setNote(
       r.ok
         ? "One week of sponsored eyes for one app. Visibility, not a badge."
@@ -91,17 +150,21 @@ function Flints() {
     );
   }
 
-  if (user && !readyOnboard) {
+  if (user && readyOnboard === null) {
+    return <PlayShell heroTitle="Flints" heroLine=""><span /></PlayShell>;
+  }
+
+  if (user && readyOnboard === false) {
     return (
       <PlayShell heroTitle="Flints" heroLine="Four questions. Then the cubicle.">
         {onboard === 0 ? (
           <>
             <p className="text-[14px] font-medium">Are you familiar with vibe coding?</p>
-            <div className="mt-3 flex gap-2">
-              {["Yes", "I've heard of it", "No"].map((l) => (
-                <button key={l} type="button" onClick={() => setOnboard(1)} className="chip-lens h-8 rounded-full px-3">
+            <div className="mt-3 flex flex-wrap gap-1">
+              {["Yes", "I've heard of it", "No"].map((l, i) => (
+                <SpecBtn key={l} i={i} onClick={() => setOnboard(1)}>
                   {l}
-                </button>
+                </SpecBtn>
               ))}
             </div>
           </>
@@ -109,15 +172,10 @@ function Flints() {
           <>
             <p className="text-[14px] font-medium">Which builders have you heard of?</p>
             <div className="mt-2 flex flex-wrap gap-1">
-              {PLATS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setHeard((h) => (h.includes(p) ? h.filter((x) => x !== p) : [...h, p]))}
-                  className={cn("chip-lens h-7 rounded-full px-2.5 text-[11px]", heard.includes(p) && "chip-lens-on")}
-                >
+              {PLATS.map((p, i) => (
+                <SpecBtn key={p} i={i + 3} on={heard.includes(p)} onClick={() => setHeard((h) => (h.includes(p) ? h.filter((x) => x !== p) : [...h, p]))}>
                   {p}
-                </button>
+                </SpecBtn>
               ))}
             </div>
             <input
@@ -134,15 +192,10 @@ function Flints() {
           <>
             <p className="text-[14px] font-medium">Which have you actually used?</p>
             <div className="mt-2 flex flex-wrap gap-1">
-              {PLATS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setUsed((h) => (h.includes(p) ? h.filter((x) => x !== p) : [...h, p]))}
-                  className={cn("chip-lens h-7 rounded-full px-2.5 text-[11px]", used.includes(p) && "chip-lens-on")}
-                >
+              {PLATS.map((p, i) => (
+                <SpecBtn key={p} i={i + 16} on={used.includes(p)} onClick={() => setUsed((h) => (h.includes(p) ? h.filter((x) => x !== p) : [...h, p]))}>
                   {p}
-                </button>
+                </SpecBtn>
               ))}
             </div>
             <button type="button" onClick={() => setOnboard(3)} className="mt-3 h-8 rounded-full bg-fg px-3 text-[12px] text-bg">
@@ -153,15 +206,10 @@ function Flints() {
           <>
             <p className="text-[14px] font-medium">What kinds of apps interest you?</p>
             <div className="mt-2 flex flex-wrap gap-1">
-              {CATS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setCats((h) => (h.includes(p) ? h.filter((x) => x !== p) : [...h, p]))}
-                  className={cn("chip-lens h-7 rounded-full px-2.5 text-[11px]", cats.includes(p) && "chip-lens-on")}
-                >
+              {CATS.map((p, i) => (
+                <SpecBtn key={p} i={i + 29} on={cats.includes(p)} onClick={() => setCats((h) => (h.includes(p) ? h.filter((x) => x !== p) : [...h, p]))}>
                   {p}
-                </button>
+                </SpecBtn>
               ))}
             </div>
             <button
@@ -181,114 +229,178 @@ function Flints() {
   }
 
   return (
-    <PlayShell heroTitle="Your cubicle" heroLine="Three tickets on the desk. The monitor holds the rules.">
-      <div className="relative overflow-hidden rounded-2xl ring-1 ring-border">
-        <img src="/heroes/cubicle.jpg" alt="" className="h-56 w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/10" />
-        <p className="absolute top-2 left-3 font-display text-[18px] font-semibold">{n} Flints</p>
-        <button
-          type="button"
-          onClick={() => setMonitor("how")}
-          className="absolute top-[38%] left-[42%] h-16 w-[28%] rounded-md bg-black/20 ring-1 ring-white/30"
-          aria-label="Open computer"
-        />
-        <p className="absolute bottom-2 left-3 text-[10px] text-white/80">Tap the monitor for How / Redeem / Developer.</p>
-      </div>
-
-      <ol className="mt-3 grid grid-cols-3 gap-2">
-        {tickets.map((app) => (
-          <li key={app.id} className="rounded-xl bg-surface p-2 ring-1 ring-border">
-            <Link
-              to="/app/$id"
-              params={{ id: app.id }}
-              search={{ desk: "1" }}
-              onClick={() => markDeskOpen(app.id)}
-              className="block"
-            >
-              <AppIcon name={app.name} iconUrl={app.iconUrl} className="size-10" />
-              <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-medium">
-                <StatusDot app={app} />
-                {app.name}
-              </p>
-            </Link>
-            <button
-              type="button"
-              onClick={() => skip(app.id)}
-              disabled={skips <= 0}
-              className="mt-1 text-[10px] text-muted disabled:opacity-40"
-            >
-              Skip
+    <PlayShell heroTitle="Your cubicle" heroLine="Six racks on the wall. The screen is where the work happens.">
+      <div className="cubicle-scene">
+        <img src="/heroes/cubicle-live.jpg" alt="" />
+        <div className="cubicle-racks">
+          {RACKS.map((rack) => (
+            <button key={rack.id} type="button" className="cubicle-rack" onClick={() => setScreen(rack.id)}>
+              <span>{rack.label}</span>
             </button>
-          </li>
-        ))}
-      </ol>
-      <p className="mt-1 text-[10px] text-muted">{skips} skips left today.</p>
-      {note ? <p className="mt-2 text-[12px] text-muted">{note}</p> : null}
-
-      {monitor !== "off" ? (
-        <div className="fixed inset-0 z-40 grid place-items-end bg-black/55 p-3 pb-24">
-          <div className="max-h-[70dvh] w-full max-w-3xl overflow-auto rounded-2xl bg-bg p-4 ring-1 ring-border">
-            <div className="flex gap-1 overflow-x-auto pb-2">
-              {([
-                ["how", "How Flints work"],
-                ["redeem", "Redemption"],
-                ["dev", "Developer"],
-                ["price", "Pricing"],
-              ] as const).map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setMonitor(id)}
-                  className={cn("chip-lens h-7 rounded-full px-3 text-[11px]", monitor === id && "chip-lens-on")}
-                >
-                  {label}
-                </button>
-              ))}
-              <button type="button" onClick={() => setMonitor("off")} className="ml-auto text-[11px] text-muted">
-                Close
+          ))}
+        </div>
+        <button type="button" className="cubicle-screen-hit" aria-label="Open the computer" onClick={() => setScreen(screen || "random")} />
+        <p className="cubicle-note">About a minute is a Flint. A real note is worth more.</p>
+        <p className="absolute top-2 left-3 text-[12px] font-semibold text-white drop-shadow">{n} Flints</p>
+      </div>
+      <p className="mt-2 text-[10px] text-muted">
+        Tap a folder. That pile opens on the screen. {skips} skips left today.
+      </p>
+      {bin.length ? (
+        <div className="mt-2 text-[11px]">
+          <p className="text-[10px] tracking-wide text-muted uppercase">Bin</p>
+          {bin.map((id) => (
+            <p key={id} className="mt-1">
+              {catalog.find((a) => a.id === id)?.name || id}{" "}
+              <button type="button" className="underline" onClick={() => { restoreBin(id); setInbox(inboxIds()); setBin(binIds()); }}>
+                Back to inbox
+              </button>{" "}
+              <button type="button" className="underline text-muted" onClick={() => { binApp(id, true); setBin(binIds()); }}>
+                Never again
               </button>
-            </div>
-            {monitor === "how" ? (
-              <div className="space-y-2 text-[12px] text-muted">
-                <p>
-                  Open a ticket, actually use the PWA (~2 minutes of real poking), then a 1–5 star rating plus a
-                  public review and a private critique (150 characters each). That earns 1 Flint. Stars without
-                  sentences: 0. Opening the tab: 0.
-                </p>
-                <p>Verified broken link or wrong metadata: +2.</p>
-              </div>
-            ) : monitor === "redeem" ? (
-              <div className="text-[12px] text-muted">
-                <p>
-                  {FLINT_PROMO_COST} Flints = one week of sponsored eyes for one of your apps. Buying visibility,
-                  not a badge.
-                </p>
-                <button
-                  type="button"
-                  onClick={redeem}
-                  className="mt-3 h-9 rounded-full bg-get px-4 text-[12px] font-semibold text-get-fg"
-                >
-                  Redeem a sponsored week
-                </button>
-              </div>
-            ) : monitor === "dev" ? (
-              <div className="text-[12px] text-muted">
-                <p>File a PWA for free. Claim one that’s already indexed.</p>
-                <Link to="/studio" className="mt-3 inline-flex h-9 items-center rounded-full bg-fg px-4 text-[12px] text-bg">
-                  Become a developer
-                </Link>
-              </div>
-            ) : (
-              <div className="text-[12px] text-muted">
-                <p>$4.99/mo — Home sponsored tile. $19.99/mo — Desk pool. Paying never buys stars.</p>
-                <Link to="/advertise" className="mt-3 inline-block text-primary">
-                  Sponsor the yard
-                </Link>
-              </div>
-            )}
-          </div>
+            </p>
+          ))}
         </div>
       ) : null}
+      {note ? <p className="mt-2 text-[12px] text-muted">{note}</p> : null}
+
+      {screen ? (
+        <DeskScreen
+          rack={screen}
+          flints={n}
+          catalog={catalog}
+          inbox={inbox}
+          tickets={tickets}
+          skipped={skipped}
+          done={[...new Set([...done, ...outbox.map((o) => o.id)])]}
+          paid={catalog.filter((a) => a.sponsored && a.paid)}
+          onPick={setScreen}
+          onClose={() => setScreen(null)}
+          onSkip={skip}
+          onRedeem={redeem}
+          onBin={(id) => {
+            binApp(id, false);
+            setInbox(inboxIds());
+            setBin(binIds());
+          }}
+        />
+      ) : null}
     </PlayShell>
+  );
+}
+
+function pileApps(rack: RackId, catalog: AppEntry[], inbox: string[], tickets: AppEntry[], skipped: string[], done: string[], paid: AppEntry[]) {
+  const byId = (ids: string[]) => ids.map((id) => catalog.find((a) => a.id === id)).filter((a): a is AppEntry => Boolean(a));
+  if (rack === "inbox") return byId(inbox);
+  if (rack === "random") return tickets;
+  if (rack === "paid") return paid;
+  if (rack === "flint") return [];
+  if (rack === "skipped") return byId(skipped);
+  return byId(done);
+}
+
+function DeskScreen({
+  rack,
+  flints,
+  catalog,
+  inbox,
+  tickets,
+  skipped,
+  done,
+  paid,
+  onPick,
+  onClose,
+  onSkip,
+  onRedeem,
+  onBin,
+}: {
+  rack: RackId;
+  flints: number;
+  catalog: AppEntry[];
+  inbox: string[];
+  tickets: AppEntry[];
+  skipped: string[];
+  done: string[];
+  paid: AppEntry[];
+  onPick: (id: RackId) => void;
+  onClose: () => void;
+  onSkip: (id: string) => void;
+  onRedeem: () => void;
+  onBin: (id: string) => void;
+}) {
+  const apps = pileApps(rack, catalog, inbox, tickets, skipped, done, paid);
+  const blurb =
+    rack === "inbox"
+      ? "Apps you sent yourself."
+      : rack === "random"
+        ? "Three from the index. These are the ones asking for a sitting."
+        : rack === "paid"
+          ? "Paid sponsors. None until someone actually pays."
+          : rack === "flint"
+            ? "Flint-redeemed weeks. None yet."
+            : rack === "skipped"
+              ? "Set aside. They can come back."
+              : "Reviews you already finished.";
+  return (
+    <div className="desk-os">
+      <div className="desk-os-bezel">
+        <div className="flex items-center gap-2">
+          <p className="text-[11px] tracking-wide text-white/50 uppercase">Desk</p>
+          <p className="ml-auto text-[11px] text-white/70">{flints} Flints</p>
+          <button type="button" onClick={onClose} className="text-[11px] text-white/60">
+            Close
+          </button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {RACKS.map((r, i) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => onPick(r.id)}
+              className={cn("spec-pick", rack === r.id && "spec-pick-on")}
+              style={specVars(i + 40)}
+            >
+              <span className="spec-pick-face">{r.label}</span>
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-[13px] font-medium">{RACKS.find((r) => r.id === rack)?.label}</p>
+        <p className="text-[11px] text-white/55">{blurb}</p>
+        {apps.length === 0 ? <p className="mt-3 text-[12px] text-white/45">This rack is empty.</p> : null}
+        <ul>
+          {apps.map((app) => (
+            <li key={app.id} className="desk-os-row">
+              <AppIcon name={app.name} iconUrl={app.iconUrl} className="size-6 text-[9px]" />
+              <span className="min-w-0 flex-1 truncate">{app.name}</span>
+              <Link
+                to="/app/$id"
+                params={{ id: app.id }}
+                search={{ desk: tickets.some((t) => t.id === app.id) ? "1" : undefined }}
+                onClick={() => markDeskOpen(app.id)}
+                className="text-[11px] text-white underline"
+              >
+                Open
+              </Link>
+              {rack === "random" ? (
+                <button type="button" className="text-[11px] text-white/50" onClick={() => onSkip(app.id)}>
+                  Skip
+                </button>
+              ) : null}
+              {rack === "inbox" ? (
+                <button type="button" className="text-[11px] text-white/50" onClick={() => onBin(app.id)}>
+                  Bin
+                </button>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+        <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-white/55">
+          <button type="button" onClick={onRedeem}>Redeem a week</button>
+          <Link to="/studio">File an app</Link>
+          <Link to="/contact">Contact</Link>
+          <Link to="/advertise">Pricing</Link>
+        </div>
+      </div>
+    </div>
   );
 }

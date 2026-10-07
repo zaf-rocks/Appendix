@@ -42,16 +42,24 @@ export { GROK_PROVIDERS };
 
 // ── Live-preview bearer token ────────────────────────────────────────────────
 // The embedded preview iframe has partitioned cookies, so we keep the session's
-// bearer token in sessionStorage and attach it to every Better Auth request (and
-// to server functions, via `@/lib/auth/middleware`). Empty everywhere except the
-// preview after a popup sign-in, so the cookie path is untouched elsewhere.
+// bearer token in localStorage (it survives a reload; sessionStorage did not)
+// and attach it to every Better Auth request (and to server functions, via
+// `@/lib/auth/middleware`). Empty everywhere except the preview after a popup
+// sign-in, so the cookie path is untouched elsewhere.
 const BEARER_KEY = "grok-auth.bearer-token";
 
 /** The stored preview bearer token, or null. */
 export function getBearerToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.sessionStorage.getItem(BEARER_KEY);
+    const saved = window.localStorage.getItem(BEARER_KEY);
+    if (saved) return saved;
+    const legacy = window.sessionStorage.getItem(BEARER_KEY);
+    if (legacy) {
+      window.localStorage.setItem(BEARER_KEY, legacy);
+      return legacy;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -60,8 +68,9 @@ export function getBearerToken(): string | null {
 function setBearerToken(token: string | null): void {
   if (typeof window === "undefined") return;
   try {
-    if (token) window.sessionStorage.setItem(BEARER_KEY, token);
-    else window.sessionStorage.removeItem(BEARER_KEY);
+    if (token) window.localStorage.setItem(BEARER_KEY, token);
+    else window.localStorage.removeItem(BEARER_KEY);
+    window.sessionStorage.removeItem(BEARER_KEY);
   } catch {
     /* storage unavailable — ignore */
   }

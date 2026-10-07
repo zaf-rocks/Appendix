@@ -4,6 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { SEED, type AppEntry, type Genre } from "@/lib/catalog";
 import { inferProvenance, inferRoles } from "@/lib/provenance";
+import { baseTags, cleanTag, mergeTags, TAG_CAP } from "@/lib/tags";
 
 type ListingRow = {
   id: string;
@@ -17,6 +18,7 @@ type ListingRow = {
   paid: boolean;
   coming_soon: boolean;
   platform: string;
+  status?: string;
 };
 
 type ReviewAgg = { listing_id: string; avg: number; n: number };
@@ -57,27 +59,70 @@ function rowToApp(row: ListingRow, rating = 0, n = 0): AppEntry {
 }
 
 export const listStore = createServerFn({ method: "GET" }).handler(async () => {
-  if (!useLiveDb()) return SEED;
+  if (!useLiveDb()) return SEED.map((app) => ({ ...app, tags: baseTags(app) }));
   try {
     const sql = await getSql();
     const rows = await sql<ListingRow>`
-      select id, user_id, name, tagline, description, url, developer_name, genres, paid, coming_soon, platform
+      select id, user_id, name, tagline, description, url, developer_name, genres, paid, coming_soon, platform, coalesce(status, 'live') as status
       from listings order by created_at desc
     `;
     const aggs = await sql<ReviewAgg>`
       select listing_id, avg(rating)::float as avg, count(*)::int as n
       from reviews group by listing_id
     `;
+    let hidden = new Set<string>();
+    let dead = new Set<string>();
+    try {
+      const mods = await sql<{ listing_id: string; hidden: boolean; dead: boolean }>`
+        select listing_id, hidden, dead from well_mod
+      `;
+      hidden = new Set(mods.filter((m) => m.hidden).map((m) => m.listing_id));
+      dead = new Set(mods.filter((m) => m.dead).map((m) => m.listing_id));
+    } catch {
+      hidden = new Set();
+    }
     const aggMap = new Map(aggs.map((a) => [a.listing_id, a]));
-    const uploaded = rows.map((r) => {
-      const a = aggMap.get(r.id);
-      return rowToApp(r, a?.avg ?? 0, a?.n ?? 0);
-    });
+    const uploaded = rows
+      .filter((r) => (r.status || "live") === "live" && !hidden.has(r.id))
+      .map((r) => {
+        const a = aggMap.get(r.id);
+        const app = rowToApp(r, a?.avg ?? 0, a?.n ?? 0);
+        if (dead.has(r.id)) app.url = "#";
+        return app;
+      });
     const map = new Map<string, AppEntry>();
-    [...SEED, ...uploaded].forEach((x) => map.set(x.id, x));
-    return Array.from(map.values());
+    SEED.filter((a) => !hidden.has(a.id)).forEach((a) => {
+      map.set(a.id, dead.has(a.id) ? { ...a, url: "#" } : a);
+    });
+    uploaded.forEach((x) => map.set(x.id, x));
+    const apps = Array.from(map.values());
+    try {
+      await sql.query(`
+        create table if not exists listing_tags (
+          listing_id text not null,
+          tag text not null,
+          primary key (listing_id, tag)
+        )
+      `);
+      await sql.query(`create table if not exists tag_blocks (tag text primary key)`);
+      const blockedRows = await sql<{ tag: string }>`select tag from tag_blocks`;
+      const extraRows = await sql<{ listing_id: string; tag: string }>`select listing_id, tag from listing_tags`;
+      const blocked = new Set(blockedRows.map((r) => r.tag.toLowerCase()));
+      const extras = new Map<string, string[]>();
+      for (const row of extraRows) {
+        const list = extras.get(row.listing_id) || [];
+        list.push(row.tag);
+        extras.set(row.listing_id, list);
+      }
+      return apps.map((app) => ({
+        ...app,
+        tags: mergeTags(baseTags(app), extras.get(app.id) || [], blocked),
+      }));
+    } catch {
+      return apps.map((app) => ({ ...app, tags: baseTags(app) }));
+    }
   } catch {
-    return SEED;
+    return SEED.map((app) => ({ ...app, tags: baseTags(app) }));
   }
 });
 
@@ -112,6 +157,7 @@ const submitSchema = z.object({
   screenshots: z.string().max(800).optional().default(""),
   installable: z.boolean().optional().default(false),
   offline: z.boolean().optional().default(false),
+  tags: z.string().max(240).optional().default(""),
 });
 
 export const submitListing = createServerFn({ method: "POST" })
@@ -121,8 +167,19 @@ export const submitListing = createServerFn({ method: "POST" })
     const sql = await getSql();
     const id = `dev-${context.userId.slice(0, 8)}-${Date.now()}`;
     const url = data.url?.trim() || "#";
+    const norm = url.replace(/\/+$/, "").toLowerCase();
+    if (norm && norm !== "#") {
+      const seedHit = SEED.some((a) => (a.url || "").replace(/\/+$/, "").toLowerCase() === norm);
+      const rows = await sql<{ id: string }>`
+        select id from listings
+        where lower(rtrim(url, '/')) = ${norm}
+          and coalesce(status, 'live') <> 'removed'
+        limit 1
+      `;
+      if (seedHit || rows.length) return { id: "", duplicate: true as const };
+    }
     await sql`
-      insert into listings (id, user_id, name, tagline, description, url, developer_name, genres, paid, coming_soon, platform, icon_url, contact_email, screenshots, installable, offline)
+      insert into listings (id, user_id, name, tagline, description, url, developer_name, genres, paid, coming_soon, platform, icon_url, contact_email, screenshots, installable, offline, status)
       values (
         ${id},
         ${context.userId},
@@ -139,10 +196,86 @@ export const submitListing = createServerFn({ method: "POST" })
         ${data.contactEmail ?? ""},
         ${data.screenshots ?? ""},
         ${data.installable ?? false},
-        ${data.offline ?? false}
+        ${data.offline ?? false},
+        'pending'
       )
     `;
-    return { id };
+    return { id, duplicate: false as const };
+  });
+
+export const myBookmarks = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    await sql.query(`
+      create table if not exists user_bookmarks (
+        user_id text not null,
+        listing_id text not null,
+        primary key (user_id, listing_id)
+      )
+    `);
+    const rows = await sql<{ listing_id: string }>`select listing_id from user_bookmarks where user_id = ${context.userId}`;
+    return rows.map((r) => r.listing_id);
+  });
+
+export const setBookmark = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ listingId: z.string().min(1).max(80), on: z.boolean() }))
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    await sql.query(`
+      create table if not exists user_bookmarks (
+        user_id text not null,
+        listing_id text not null,
+        primary key (user_id, listing_id)
+      )
+    `);
+    if (data.on) {
+      await sql`
+        insert into user_bookmarks (user_id, listing_id) values (${context.userId}, ${data.listingId})
+        on conflict do nothing
+      `;
+    } else {
+      await sql`delete from user_bookmarks where user_id = ${context.userId} and listing_id = ${data.listingId}`;
+    }
+    return { ok: true as const };
+  });
+
+export const addListingTags = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(z.object({ listingId: z.string().min(1).max(80), tags: z.array(z.string()).min(1).max(10) }))
+  .handler(async ({ data, context }) => {
+    const sql = await getSql();
+    await sql.query(`
+      create table if not exists listing_tags (
+        listing_id text not null,
+        tag text not null,
+        primary key (listing_id, tag)
+      )
+    `);
+    await sql.query(`create table if not exists tag_blocks (tag text primary key)`);
+    const blocked = new Set((await sql<{ tag: string }>`select tag from tag_blocks`).map((r) => r.tag.toLowerCase()));
+    const have = await sql<{ tag: string }>`select tag from listing_tags where listing_id = ${data.listingId}`;
+    const owned = new Set(have.map((r) => r.tag.toLowerCase()));
+    let added = 0;
+    for (const raw of data.tags) {
+      const tag = cleanTag(raw);
+      if (!tag || blocked.has(tag.toLowerCase()) || owned.has(tag.toLowerCase())) continue;
+      if (owned.size >= TAG_CAP) break;
+      await sql`insert into listing_tags (listing_id, tag) values (${data.listingId}, ${tag}) on conflict do nothing`;
+      owned.add(tag.toLowerCase());
+      added += 1;
+    }
+    const flints = Math.floor(added / 3);
+    if (flints > 0) {
+      try {
+        await sql.query(`alter table flint_ledger add column if not exists user_id text`);
+        await sql`insert into flint_ledger (amount, reason, user_id) values (${flints}, ${`tags:${data.listingId}:${Date.now()}`}, ${context.userId})`;
+      } catch {
+        /* ledger may not exist yet */
+      }
+    }
+    return { ok: true as const, added, flints };
   });
 
 export const rateListing = createServerFn({ method: "POST" })
@@ -152,17 +285,21 @@ export const rateListing = createServerFn({ method: "POST" })
       listingId: z.string(),
       rating: z.number().int().min(1).max(5),
       body: z.string().max(600).optional().default(""),
+      privateBody: z.string().max(800).optional().default(""),
     }),
   )
   .handler(async ({ data, context }) => {
     const sql = await getSql();
-    await sql`
-      insert into reviews (user_id, listing_id, rating, body)
-      values (${context.userId}, ${data.listingId}, ${data.rating}, ${data.body ?? ""})
-      on conflict (user_id, listing_id)
-      do update set rating = excluded.rating, body = excluded.body
+    await sql.query(`alter table reviews add column if not exists private_body text`);
+    const existing = await sql<{ id: number }>`
+      select id from reviews where user_id = ${context.userId} and listing_id = ${data.listingId} limit 1
     `;
-    return { ok: true };
+    if (existing.length) return { ok: false as const, already: true as const };
+    await sql`
+      insert into reviews (user_id, listing_id, rating, body, private_body)
+      values (${context.userId}, ${data.listingId}, ${data.rating}, ${data.body ?? ""}, ${data.privateBody ?? ""})
+    `;
+    return { ok: true as const, already: false as const };
   });
 
 export const myListings = createServerFn({ method: "GET" })

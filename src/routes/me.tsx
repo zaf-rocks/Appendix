@@ -29,7 +29,7 @@ function Me() {
           </div>
         ) : (
           <div>
-            <p className="text-[15px] font-semibold">Guest of the Yard</p>
+            <p className="text-[15px] font-semibold">Guest</p>
             <p className="mt-1 text-[12px] text-muted">
               An account unlocks filing apps, claiming listings, Flints, the critic pool, bookmarks,
               beta, Desk, and developer tools after a tiny onboarding. No résumé.
@@ -58,6 +58,7 @@ function Me() {
         <Row to="/beta" title="Critic pool · Bench" note="Higher Flint reviews" />
         <Row to="/alerts" title="Notifications" note="Claims and desk pings" />
         <Row to="/saved" title="Bookmarks" note="Swipe-saves from Find" />
+        <Row to="/contact" title="Contact" note="Press, legal, a reply" />
         <Row to="/flints" title="Flint ledger" note="What you earned" />
       </ul>
     </PlayShell>
@@ -69,7 +70,7 @@ function Row({
   title,
   note,
 }: {
-  to: "/studio" | "/beta" | "/alerts" | "/advertise" | "/saved" | "/flints";
+  to: "/studio" | "/beta" | "/alerts" | "/advertise" | "/saved" | "/flints" | "/contact";
   title: string;
   note: string;
 }) {

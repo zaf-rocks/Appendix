@@ -1,9 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Bell, Bookmark, Coins, Factory, Gamepad2, House, Search, Users, CircleUser } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { SEED } from "@/lib/catalog";
 import { useLens } from "@/lib/lens";
 import { throughLens } from "@/lib/provenance";
+import { specVars } from "@/lib/spectrum";
 import { cn } from "@/lib/cn";
 
 const LETTERS = [
@@ -24,7 +26,7 @@ const TABS = [
 ] as const;
 
 function heroFor(path: string) {
-  if (path === "/") return { mp4: "/heroes/home-monument.mp4", poster: "/heroes/home-monument.jpg" };
+  if (path === "/") return { mp4: "/heroes/home-anarchy.mp4", poster: "/heroes/home-anarchy.jpg" };
   if (path === "/games") return { mp4: "/heroes/games.mp4", poster: "/heroes/games.jpg" };
   if (path === "/flints" || path === "/desk") return { mp4: "/heroes/desk.mp4", poster: "/heroes/desk.jpg" };
   if (path === "/people") return { mp4: "/heroes/home-d.mp4", poster: "/heroes/home-d.jpg" };
@@ -40,35 +42,9 @@ function tabOn(to: string, path: string) {
   return path === to || path.startsWith(`${to}/`);
 }
 
-function LensToggle() {
-  const { lens, setLens } = useLens();
-  return (
-    <div className="mt-1 w-full">
-      <div className="hero-lift flex h-[16px] w-full rounded-full bg-black/55 p-[1px] text-[8px] font-semibold tracking-wide ring-1 ring-white/20">
-        <button
-          type="button"
-          onClick={() => setLens("all")}
-          className={cn(
-            "h-full flex-1 rounded-full uppercase",
-            lens === "all" ? "spec-fill spec-cycle text-black" : "text-white/70",
-          )}
-        >
-          all
-        </button>
-        <button
-          type="button"
-          onClick={() => setLens("vibe")}
-          className={cn(
-            "h-full flex-1 rounded-full uppercase",
-            lens === "vibe" ? "nebula-fill nebula-cycle text-white" : "text-white/70",
-          )}
-        >
-          vibe
-        </button>
-      </div>
-      <p className="mt-0.5 text-[8px] text-white/65">{lens === "vibe" ? "Vibe-coded PWAs" : "Every PWA we index"}</p>
-    </div>
-  );
+function LensCaption() {
+  const { lens } = useLens();
+  return <p className="lens-caption">{lens === "vibe" ? "Vibe-coded now" : "Double-tap Home for vibe"}</p>;
 }
 
 export function PlayShell({
@@ -85,8 +61,11 @@ export function PlayShell({
   heroLine?: string;
 }) {
   const { user, isPending } = useCurrentUserState();
-  const { lens } = useLens();
+  const { lens, setLens } = useLens();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const drum = useRef<number[]>([]);
+  const markRef = useRef<HTMLButtonElement>(null);
+  const homeTap = useRef(0);
   const hero = heroFor(path);
   const home = path === "/";
   const identOn = ["/me", "/studio", "/beta", "/advertise", "/login"].includes(path);
@@ -96,12 +75,29 @@ export function PlayShell({
   const letter = (user?.displayName || user?.primaryEmail || "").trim().charAt(0).toUpperCase();
   const n = throughLens(SEED, lens).length;
 
+  useEffect(() => {
+    const el = markRef.current;
+    if (!el) return;
+    const onDown = () => {
+      const now = Date.now();
+      drum.current = drum.current.filter((t) => now - t < 5000);
+      drum.current.push(now);
+      if (drum.current.length >= 20) {
+        drum.current = [];
+        window.location.assign("/well");
+      }
+    };
+    el.addEventListener("pointerdown", onDown);
+    return () => el.removeEventListener("pointerdown", onDown);
+  }, []);
+
   return (
     <div className="min-h-dvh bg-bg text-fg">
-      <header className="relative aspect-[2.4/1] max-h-[220px] min-h-[128px] overflow-hidden">
+      <header className="hero-band relative">
+        <div className="absolute inset-0 overflow-hidden">
         <video
           key={hero.mp4}
-          className="absolute inset-0 size-full object-cover"
+          className="absolute inset-0 size-full object-cover object-[center_32%] pointer-events-none"
           autoPlay
           muted
           loop
@@ -110,27 +106,43 @@ export function PlayShell({
         >
           <source src={hero.mp4} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,6,32,0.32)_0%,rgba(8,4,24,0.08)_42%,rgba(8,4,22,0.86)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,6,32,0.22)_0%,rgba(8,4,24,0.02)_36%,rgba(8,4,22,0.42)_70%,rgba(5,1,12,0.94)_100%)]" />
+        <div className="hero-sill pointer-events-none absolute inset-x-0 bottom-0" />
+        </div>
         <div className="absolute inset-x-0 top-0 z-10 flex items-start gap-2 px-3 pt-2.5">
           <div className="flex items-start gap-1.5">
-            <img
-              src="/mark-a.jpg"
-              alt=""
-              className="hero-lift size-[3.35rem] shrink-0 rounded-[10px] object-cover ring-1 ring-white/25"
-            />
-            <div className="w-fit">
+            <button
+              ref={markRef}
+              type="button"
+              tabIndex={-1}
+              aria-hidden
+              className="hero-lift size-[3.7rem] shrink-0 rounded-[10px] p-0"
+            >
+              <img
+                src="/mark-a.jpg?v=lit"
+                alt=""
+                draggable={false}
+                className="size-full rounded-[10px] object-cover"
+              />
+            </button>
+            <div className="flex w-fit flex-col items-center">
               <Link to="/" className="block">
-                <span className="font-mark text-3d inline-block text-[22px] leading-none tracking-wide text-white [transform:perspective(420px)_rotateX(12deg)]">
+                <span
+                  className={cn(
+                    "hero-mark font-mark text-3d inline-block text-[22px] leading-none tracking-wide",
+                    lens === "vibe" ? "hero-mark-vibe" : "hero-mark-all",
+                  )}
+                >
                   Appendix
                 </span>
               </Link>
-              <LensToggle />
+              <LensCaption />
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-3 pt-0.5">
+          <div className="ml-auto flex items-center gap-2.5 pt-0.5">
             <Link
               to="/saved"
-              className={cn("bookmark-btn", savedOn && "bookmark-btn-on")}
+              className={cn("bookmark-btn bookmark-btn-sm", savedOn && "bookmark-btn-on")}
               aria-label="Bookmarks"
             >
               <span className="bookmark-btn-face">
@@ -140,26 +152,26 @@ export function PlayShell({
             <Link
               to="/flints"
               className={cn(
-                "hero-lift grid size-11 place-items-center rounded-full ring-1 backdrop-blur",
+                "hero-lift grid size-9 place-items-center rounded-full ring-1 backdrop-blur",
                 flintsOn ? "bg-get text-get-fg ring-white/50" : "bg-black/50 text-get ring-white/20",
               )}
               aria-label="Flints"
             >
-              <Coins className="size-5" />
+              <Coins className="size-4" />
             </Link>
             <Link
               to="/alerts"
               className={cn(
-                "hero-lift relative grid size-11 place-items-center rounded-full ring-1 backdrop-blur",
+                "hero-lift relative grid size-9 place-items-center rounded-full ring-1 backdrop-blur",
                 alertsOn ? "bg-primary text-primary-fg ring-white/50" : "bg-black/50 text-primary ring-white/20",
               )}
               aria-label="Alerts"
             >
-              <Bell className="size-5" />
+              <Bell className="size-4" />
             </Link>
             <Link
               to="/me"
-              className={cn("ident-ring hero-lift grid size-[3.35rem] place-items-center overflow-hidden rounded-full p-[2px]")}
+              className={cn("ident-ring-vivid hero-lift grid size-[3.7rem] place-items-center overflow-hidden rounded-full p-[2px]")}
               aria-label="Identity"
             >
               <span
@@ -173,25 +185,18 @@ export function PlayShell({
             </Link>
           </div>
         </div>
-        {home || savedOn ? null : (
-          <div className="absolute inset-x-0 bottom-7 z-10 px-3">
-            <p className="font-display text-3d text-[18px] leading-none font-semibold tracking-tight [transform:perspective(380px)_rotateX(10deg)]">
-              {heroTitle || ""}
-            </p>
-          </div>
-        )}
-        <div className="absolute inset-x-0 bottom-1.5 z-10 flex items-baseline justify-between gap-2 px-3">
-          {savedOn ? (
-            <p className="bookmark-hero-title shrink-0">{heroTitle || "Bookmarks"}</p>
-          ) : home && (rail || "a") === "a" ? (
+        <div className="absolute inset-x-0 bottom-2.5 z-10 flex items-baseline justify-between gap-2 pl-3 pr-0">
+          {home && (rail || "a") === "a" ? (
             <p className="hero-count shrink-0">
-              {n.toLocaleString()} {lens === "vibe" ? "Vibe Apps" : "All Apps"}
+              {n.toLocaleString()} {lens === "vibe" ? "Vibe Apps" : "Web Apps"}
             </p>
+          ) : !home ? (
+            <p className="bookmark-hero-title shrink-0">{heroTitle || ""}</p>
           ) : (
             <span />
           )}
           {home ? (
-            <p className="hero-tag min-w-0 flex-1 truncate text-right">Putting Progressive in Progressive Web Apps</p>
+            <p className="hero-tag min-w-0 flex-1 truncate text-right">Putting the Progressive in Progressive Web App</p>
           ) : (
             <p className={cn("hero-tag min-w-0 flex-1 truncate text-right", savedOn && "bookmark-hero-tag")}>{heroLine || ""}</p>
           )}
@@ -199,39 +204,72 @@ export function PlayShell({
       </header>
 
       {letters ? (
-        <div className="flex gap-1 overflow-x-auto px-2 py-1.5">
-          {LETTERS.map((l) => (
+        <>
+          <div className="no-bar flex gap-1 overflow-x-auto px-2 pt-1 pb-0">
+          {LETTERS.map((l, i) => (
             <Link
               key={l.id}
               to={path === "/games" ? "/games" : "/"}
               search={{ rail: l.id }}
-              className={cn(
-                "h-6 shrink-0 rounded-full px-2.5 text-[10px] leading-6 whitespace-nowrap",
-                (rail || "a") === l.id ? "bg-fg text-bg" : "bg-raised text-muted",
-              )}
+              data-tone={String((i % 3) + 1)}
+              style={specVars(i)}
+              className={cn("letter-tab", (rail || "a") === l.id && "letter-tab-on")}
             >
-              {l.label}
+              <span className="letter-tab-face">{l.label}</span>
             </Link>
           ))}
         </div>
+          <div className="hero-sill hero-sill-b mt-1.5" />
+        </>
       ) : null}
 
-      <main className="px-3 pt-2 pb-24">{children}</main>
+      <main className="px-3 pt-0 pb-36">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/95 backdrop-blur">
+        <div className="mx-auto grid w-full max-w-3xl grid-cols-5 items-center pt-1 text-[10px] text-muted">
+          <span />
+          <Link to="/contact" className="justify-self-end">
+            Contact
+          </Link>
+          <span className="nav-mark justify-self-center" aria-hidden>
+            ※
+          </span>
+          <Link to="/me" className="justify-self-start">
+            Account
+          </Link>
+          <span />
+        </div>
         <div className="mx-auto grid w-full max-w-3xl grid-cols-5 px-1 pb-[env(safe-area-inset-bottom)]">
           {TABS.map((t) => {
             const on = tabOn(t.to, path);
             const Icon = t.icon;
+            const homeTab = t.to === "/";
             return (
               <Link
                 key={t.to}
                 to={t.to}
+                onClick={(e) => {
+                  if (!homeTab || path !== "/") return;
+                  e.preventDefault();
+                  const now = Date.now();
+                  if (now - homeTap.current < 480) {
+                    homeTap.current = 0;
+                    setLens(lens === "vibe" ? "all" : "vibe");
+                  } else {
+                    homeTap.current = now;
+                  }
+                }}
                 className={cn("flex flex-col items-center gap-1 py-3 text-[11px]", on ? "text-fg" : "text-muted")}
               >
-                <span className={cn("grid size-11 place-items-center rounded-2xl", on ? "ident-ring p-[2px]" : "bg-raised")}>
-                  <span className={cn("grid size-full place-items-center rounded-[14px]", on ? "bg-bg" : "")}>
+                <span
+                  className={cn(
+                    "grid size-11 place-items-center rounded-2xl",
+                    on ? (homeTab && lens === "vibe" ? "nebula-fill nebula-cycle p-[2px]" : "ident-ring p-[2px]") : "bg-raised",
+                  )}
+                >
+                  <span className={cn("relative grid size-full place-items-center rounded-[14px]", on ? "bg-bg" : "")}>
                     <Icon className="size-5" />
+                    {homeTab ? <span className="home-twice">2×</span> : null}
                   </span>
                 </span>
                 {t.label}

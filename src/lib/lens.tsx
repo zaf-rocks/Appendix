@@ -16,7 +16,15 @@ function apply(l: Lens) {
 export function LensProvider({ children }: { children: ReactNode }) {
   const [lens, setLensState] = useState<Lens>("all");
   useEffect(() => {
-    apply("all");
+    let start: Lens = "all";
+    try {
+      const saved = localStorage.getItem(KEY);
+      if (saved === "vibe" || saved === "all") start = saved;
+    } catch {
+      /* ignore */
+    }
+    setLensState(start);
+    apply(start);
   }, []);
   function setLens(l: Lens) {
     setLensState(l);

@@ -4,6 +4,7 @@ node_modules
 .DS_Store
 dist
 .vite
+.vercel
 artifacts/imagine_images
 artifacts/imagine_videos
 artifacts/pwa-store/node_modules

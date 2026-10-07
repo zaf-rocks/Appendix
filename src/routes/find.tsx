@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { PlayShell } from "@/components/play-shell";
 import { RankList } from "@/components/rails";
 import { AUDIENCES, CROWD_SUBTYPES, GENRE_META, GENRES, PLATFORMS, type Genre } from "@/lib/catalog";
@@ -7,6 +8,8 @@ import { listStore } from "@/lib/store-api";
 import { useLens } from "@/lib/lens";
 import { throughLens } from "@/lib/provenance";
 import { cn } from "@/lib/cn";
+import { specTri } from "@/lib/spectrum";
+import { TAG_LIST } from "@/lib/tags";
 
 const SUBCAT: Partial<Record<Genre, string[]>> = {
   games: ["Puzzle", "Arcade", "Board", "Idle"],
@@ -18,7 +21,14 @@ const SUBCAT: Partial<Record<Genre, string[]>> = {
   tools: ["Dev", "Convert", "Utilities"],
 };
 
+type Search = { tags?: string; genre?: string; platform?: string };
+
 export const Route = createFileRoute("/find")({
+  validateSearch: (raw: Record<string, unknown>): Search => ({
+    tags: typeof raw.tags === "string" ? raw.tags : "",
+    genre: typeof raw.genre === "string" ? raw.genre : "",
+    platform: typeof raw.platform === "string" ? raw.platform : "",
+  }),
   loader: () => listStore(),
   component: Find,
 });
@@ -26,6 +36,8 @@ export const Route = createFileRoute("/find")({
 function ChipRow({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-wrap gap-1 pb-1">{children}</div>;
 }
+
+let specCursor = 0;
 
 function Chip({
   on,
@@ -36,26 +48,33 @@ function Chip({
   onClick: () => void;
   children: React.ReactNode;
 }) {
+  const i = specCursor++;
+  const [c1, c2, c3] = specTri(i);
   return (
     <button
       type="button"
       onClick={onClick}
-      className={cn("chip-lens h-6 rounded-full px-2.5 text-[10px] leading-6", on ? "chip-lens-on" : "text-muted")}
+      className={cn("spec-pick", on && "spec-pick-on")}
+      style={{ ["--c1" as string]: c1, ["--c2" as string]: c2, ["--c3" as string]: c3 }}
     >
-      {children}
+      <span className="spec-pick-face">{children}</span>
     </button>
   );
 }
 
 function Find() {
+  specCursor = 0;
   const catalog = throughLens(Route.useLoaderData(), useLens().lens);
+  const search = Route.useSearch();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [genres, setGenres] = useState<Genre[]>([]);
   const [sub, setSub] = useState<string | null>(null);
   const [live, setLive] = useState<"all" | "live" | "soon">("all");
-  const [platform, setPlatform] = useState("any");
+  const [platform, setPlatform] = useState(search.platform || "any");
   const [crowd, setCrowd] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
+  const [sort, setSort] = useState<"popular" | "new" | "name" | "developer" | "platform">("popular");
 
   function toggleGenre(g: Genre) {
     setSub(null);
@@ -79,6 +98,9 @@ function Find() {
       if (live === "live" && (a.comingSoon || a.url === "#")) return false;
       if (live === "soon" && !a.comingSoon) return false;
       if (platform !== "any" && (a.platform || "Unknown") !== platform) return false;
+      const wanted = (search.tags || "").split(",").map((s) => s.trim()).filter(Boolean);
+      if (wanted.length && !wanted.every((t) => (a.tags || []).some((x) => x.toLowerCase() === t.toLowerCase()))) return false;
+      if (search.genre && !a.genres.includes(search.genre as Genre)) return false;
       if (sub && !`${a.tagline} ${a.name} ${a.genres.join(" ")}`.toLowerCase().includes(sub.toLowerCase())) {
         if (sub === "Make" && !(a.roles || []).some((r) => ["singers", "producers", "djs"].includes(r))) return false;
         if (sub === "Listen" && !(a.roles || []).includes("listeners")) return false;
@@ -87,19 +109,41 @@ function Find() {
       return (
         a.name.toLowerCase().includes(query) ||
         a.developer.toLowerCase().includes(query) ||
-        a.tagline.toLowerCase().includes(query)
+        a.tagline.toLowerCase().includes(query) ||
+        (a.tags || []).some((t) => t.toLowerCase().includes(query))
       );
     });
-  }, [catalog, q, genres, live, platform, crowdMeta, role, sub]);
+  }, [catalog, q, genres, live, platform, crowdMeta, role, sub, search.tags, search.genre]);
+
+  const pickedTags = (search.tags || "").split(",").map((s) => s.trim()).filter(Boolean);
+  function toggleTag(tag: string) {
+    const next = pickedTags.some((t) => t.toLowerCase() === tag.toLowerCase())
+      ? pickedTags.filter((t) => t.toLowerCase() !== tag.toLowerCase())
+      : [...pickedTags, tag];
+    void navigate({ to: "/find", search: { ...search, tags: next.join(",") } });
+  }
+  const tagChoices = [...new Set([...TAG_LIST, ...pickedTags])].filter((tag) =>
+    catalog.some((a) => (a.tags || []).some((t) => t.toLowerCase() === tag.toLowerCase())) || pickedTags.some((t) => t.toLowerCase() === tag.toLowerCase()),
+  );
+  const shown = useMemo(() => {
+    const next = [...filtered];
+    if (sort === "name") next.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sort === "developer") next.sort((a, b) => a.developer.localeCompare(b.developer) || a.name.localeCompare(b.name));
+    else if (sort === "platform") next.sort((a, b) => (a.platform || "").localeCompare(b.platform || "") || a.name.localeCompare(b.name));
+    else if (sort === "popular") next.sort((a, b) => b.ratingsCount - a.ratingsCount || b.rating - a.rating || a.name.localeCompare(b.name));
+    return next;
+  }, [filtered, sort]);
 
   return (
     <PlayShell heroTitle="Find" heroLine="What should this app do for me? Every tap eliminates.">
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="What should this app do for you?"
-        className="h-8 w-full rounded-md border border-border bg-surface px-3 text-[12px] outline-none"
-      />
+      <label className="search-field">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="What should this app do for you?"
+        />
+        <Search className="search-field-icon" aria-hidden />
+      </label>
 
       <p className="mt-3 text-[10px] tracking-wide text-muted uppercase">Crowd</p>
       <ChipRow>
@@ -179,10 +223,37 @@ function Find() {
         </p>
       ) : null}
 
+      <p className="mt-3 text-[10px] tracking-wide text-muted uppercase">Tags · combine them</p>
+      <ChipRow>
+        {tagChoices.map((tag) => (
+          <Chip key={tag} on={pickedTags.some((t) => t.toLowerCase() === tag.toLowerCase())} onClick={() => toggleTag(tag)}>
+            {tag}
+          </Chip>
+        ))}
+      </ChipRow>
+      <p className="mt-1 text-[10px] text-muted">Odd words and emoji are searchable in the box. They are not all listed.</p>
+
+      <p className="mt-3 text-[10px] tracking-wide text-muted uppercase">Order</p>
+      <ChipRow>
+        {(
+          [
+            ["popular", "Popular"],
+            ["new", "Newest"],
+            ["name", "A–Z"],
+            ["developer", "Developer"],
+            ["platform", "Platform"],
+          ] as const
+        ).map(([id, label]) => (
+          <Chip key={id} on={sort === id} onClick={() => setSort(id)}>
+            {label}
+          </Chip>
+        ))}
+      </ChipRow>
+
       <p className="mt-3 text-[11px] text-muted">
         {filtered.length} remain · swipe right saves · swipe left peeks · long-press saves
       </p>
-      <RankList apps={filtered} swipe />
+      <RankList apps={shown} swipe />
       <p className="mt-3 text-[11px] text-muted">
         Saved stack lives in{" "}
         <Link to="/saved" className="text-primary">

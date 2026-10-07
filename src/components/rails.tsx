@@ -37,9 +37,9 @@ export function Rail({
     <section>
       <h2 className="special-bar">{title}</h2>
       {shown.length ? (
-        <div className="mt-1.5 space-y-2">
+        <div className="mt-1 space-y-2">
           {bands.map((band, i) => (
-            <div key={i} className="-mx-3 flex gap-1.5 overflow-x-auto px-3 pb-0.5">
+            <div key={i} className={cn("rail-track no-bar", special && "rail-track-feature")}>
               {band.map((app) => (
                 <RailCard key={app.id} app={app} />
               ))}
@@ -68,7 +68,7 @@ function RailCard({ app }: { app: AppEntry }) {
       to="/app/$id"
       params={{ id: app.id }}
       search={{ desk: undefined }}
-      className="w-[58px] shrink-0"
+      className="rail-tile"
       onContextMenu={(e) => {
         e.preventDefault();
         setSaved(save(app.id));
@@ -79,7 +79,9 @@ function RailCard({ app }: { app: AppEntry }) {
       onMouseUp={clear}
       onMouseLeave={clear}
     >
-      <AppIcon name={app.name} iconUrl={app.iconUrl} className="size-12 rounded-[22%] text-[10px]" />
+      <div className="aspect-square w-full">
+        <AppIcon name={app.name} iconUrl={app.iconUrl} className="size-full rounded-[22%] text-[10px]" />
+      </div>
       <p className="mt-0.5 truncate text-[8px] leading-tight font-medium">{app.name}</p>
       <p className="flex items-center gap-0.5 truncate text-[7px] text-muted">
         <StatusDot app={app} />
@@ -91,22 +93,22 @@ function RailCard({ app }: { app: AppEntry }) {
 
 export function FeatureRail({ title, apps, kind }: { title: string; apps: AppEntry[]; kind: "sponsored" | "editors" }) {
   const shown = apps.slice(0, 16);
-  const box = kind === "sponsored" ? "size-[58px]" : "size-[54px]";
-  const col = kind === "sponsored" ? "w-[62px]" : "w-[58px]";
   return (
     <section>
       <h2 className="special-bar">{title}</h2>
       {shown.length ? (
-        <div className="-mx-3 mt-1.5 flex gap-1.5 overflow-x-auto px-3 pb-0.5">
+        <div className={cn("rail-track no-bar mt-1", kind === "sponsored" ? "rail-track-sponsored" : "rail-track-feature")}>
           {shown.map((app) => (
             <Link
               key={app.id}
               to="/app/$id"
               params={{ id: app.id }}
               search={{ desk: undefined }}
-              className={cn(col, "shrink-0")}
+              className="rail-tile"
             >
-              <AppIcon name={app.name} iconUrl={app.iconUrl} className={cn(box, "rounded-[22%] text-[10px]")} />
+              <div className="aspect-square w-full">
+                <AppIcon name={app.name} iconUrl={app.iconUrl} className="size-full rounded-[22%] text-[10px]" />
+              </div>
               <p className="mt-0.5 truncate text-[8px] leading-tight font-medium">{app.name}</p>
               <p className="truncate text-[7px] text-muted">{app.developer}</p>
             </Link>

@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PlayShell } from "@/components/play-shell";
+import { SuggestionSlip } from "@/components/suggestion-slip";
 import { matchFactories, type Factory } from "@/lib/factories";
 import { useLens } from "@/lib/lens";
+import { specVars } from "@/lib/spectrum";
 
 export const Route = createFileRoute("/forge")({ component: Forge });
 
@@ -104,10 +106,14 @@ function Forge() {
       heroTitle="Forge"
       heroLine="I have an idea. What should I build it with? Find stays for browsing what a builder already shipped."
     >
+      <SuggestionSlip
+        title="This page is the weird one."
+        line="Forge is not a builder. It knocks tools out until a few are left. If that is not what you thought you opened, say so. The confusion helps. A real note is a Flint."
+      />
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-muted">Guided elimination. Not a factory catalog.</p>
-        <button type="button" onClick={startOver} className="chip-lens h-6 rounded-full px-3 text-[10px]">
-          Start over
+        <button type="button" onClick={startOver} className="spec-pick" style={specVars(2)}>
+          <span className="spec-pick-face">Start over</span>
         </button>
       </div>
 
@@ -125,14 +131,15 @@ function Forge() {
         <div className="mt-4">
           <p className="text-[13px] font-medium">{STEPS[step].q}</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {STEPS[step].opts.map((o) => (
+            {STEPS[step].opts.map((o, i) => (
               <button
                 key={o.id}
                 type="button"
                 onClick={() => choose(o.add)}
-                className="chip-lens h-8 rounded-full px-3 text-[12px]"
+                className="spec-pick"
+                style={specVars(step * 5 + i + 8)}
               >
-                {o.label}
+                <span className="spec-pick-face">{o.label}</span>
               </button>
             ))}
           </div>

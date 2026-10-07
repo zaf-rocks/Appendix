@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PlayShell } from "@/components/play-shell";
 import { FeatureRail, Rail, RankList } from "@/components/rails";
 import { RailRule } from "@/components/rail-rule";
+import { SuggestionSlip } from "@/components/suggestion-slip";
 import { AUDIENCES, GENRE_META, GENRES, type Genre } from "@/lib/catalog";
 import { listStore } from "@/lib/store-api";
 import { useLens } from "@/lib/lens";
@@ -76,6 +77,11 @@ function Home() {
           <Rail title="Suggested for you" apps={featured.length ? featured : live.slice(0, 16)} special />
           <RailRule i={0} />
           <FeatureRail title="Sponsored" apps={sponsored.length ? sponsored : editors} kind="sponsored" />
+          <RailRule i={8} />
+          <SuggestionSlip
+            title="Missing an app, or is this aisle wrong?"
+            line="Not a help desk. Tell us what you came looking for, or what this shelf got wrong. A real note is a Flint."
+          />
           <RailRule i={1} />
           <Rail title="Trending opens" apps={live.slice(0, 24)} />
           <RailRule i={2} />
@@ -94,6 +100,7 @@ function Home() {
           ))}
         </>
       )}
+      <RailRule i={12} />
     </PlayShell>
   );
 }

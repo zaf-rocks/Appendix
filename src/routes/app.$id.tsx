@@ -6,9 +6,13 @@ import { PlayShell } from "@/components/play-shell";
 import { Rail } from "@/components/rails";
 import { StatusDot } from "@/components/store-shell";
 import { AUDIENCES, GENRE_META, SEED, listingStatus } from "@/lib/catalog";
-import { listClaims, listReviews, listStore, rateListing, requestClaim } from "@/lib/store-api";
+import { addListingTags, setBookmark, listClaims, listReviews, listStore, rateListing, requestClaim } from "@/lib/store-api";
+import { TAG_CAP, TAG_LIST, cleanTag } from "@/lib/tags";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { addFlints, bumpOpen, bumpReviewsFiled, deskReady, fourthReviewGate, isReported, isSaved, markDeskDone, markDeskOpen, openCount, reportBroken, replaceDeskSlot, shotUrl, toggleSave } from "@/lib/yard";
+import { cn } from "@/lib/cn";
+import { specVars } from "@/lib/spectrum";
+import { fileLinkReport, awardFlints, recordYardEvent } from "@/lib/well-api";
+import { addFlints, bumpOpen, dwellOf, finishOutbox, isReported, isSaved, lookPay, markDepart, noteReturn, openCount, reportBroken, reviewPay, sendToInbox, shotUrl, toggleSave } from "@/lib/yard";
 
 export const Route = createFileRoute("/app/$id")({
   validateSearch: (raw: Record<string, unknown>) => ({
@@ -40,29 +44,54 @@ function AppPage() {
   const { app, catalog, reviews, claim } = Route.useLoaderData();
   const { desk } = Route.useSearch();
   const { user } = useCurrentUserState();
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0);
   const [body, setBody] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [claimNote, setClaimNote] = useState<string | null>(null);
+  const [claimStep, setClaimStep] = useState(0);
   const [claimEmail, setClaimEmail] = useState("");
   const [claimProof, setClaimProof] = useState("");
   const [clicks, setClicks] = useState(0);
-  const [ready, setReady] = useState(false);
-  const [flag, setFlag] = useState(false);
-  const [flagReason, setFlagReason] = useState<string | null>(null);
+  const [dwell, setDwell] = useState(0);
+  const [sync, setSync] = useState<string | null>(null);
   const [reported, setReported] = useState(false);
   const [saved, setSaved] = useState(false);
   const [about, setAbout] = useState(false);
   const [gallery, setGallery] = useState<number | null>(null);
   const [priv, setPriv] = useState("");
-  const [contribute, setContribute] = useState(false);
+  const [reviewStep, setReviewStep] = useState(0);
+  const [fixStep, setFixStep] = useState(0);
+  const [fixKind, setFixKind] = useState("");
+  const [fixNote, setFixNote] = useState("");
+  const [fixText, setFixText] = useState("");
+  const [tagPick, setTagPick] = useState<string[]>([]);
+  const [tagFree, setTagFree] = useState("");
+  const [tagMsg, setTagMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!app) return;
     setClicks(openCount(app.id));
-    setReady(deskReady(app.id));
+    setDwell(dwellOf(app.id));
     setReported(isReported(app.id));
     setSaved(isSaved(app.id));
+  }, [app]);
+
+  useEffect(() => {
+    if (!app) return;
+    const id = app.id;
+    function back() {
+      if (document.visibilityState === "hidden") return;
+      const ms = noteReturn(id);
+      setDwell(ms);
+      if (ms > 0 && ms < 45_000) setSync("Verifying session activity... Not quite. Give it a little longer.");
+      else if (ms > 0) setSync("Verifying session activity... Desk sync complete.");
+    }
+    document.addEventListener("visibilitychange", back);
+    window.addEventListener("focus", back);
+    return () => {
+      document.removeEventListener("visibilitychange", back);
+      window.removeEventListener("focus", back);
+    };
   }, [app]);
 
   const yardScore = useMemo(() => {
@@ -99,7 +128,10 @@ function AppPage() {
       await requestClaim({
         data: { listingId: id, email: claimEmail, proof: claimProof },
       });
-      setClaimNote("Request filed. We’ll email you. Nothing is yours until that’s done.");
+      setClaimNote("Filed. Up to 72 hours before it shows on your developer page. +1 Flint for a real claim.");
+      void awardFlints({ data: { amount: 1, reason: `claim:${id}` } }).then((r) => {
+        if (!r.already) addFlints(1);
+      });
     } catch {
       setClaimNote("Sign in and send a real contact email. Instant claims are closed.");
     }
@@ -107,47 +139,42 @@ function AppPage() {
 
   async function onRate(e: React.FormEvent) {
     e.preventDefault();
-    if (body.trim().length < 150 || priv.trim().length < 150) {
-      setNote("Public review and private critique each need 150 characters. Flints are for notes, not stars alone.");
+    if (!user) {
+      setNote("Sign in before Flints exist.");
       return;
     }
-    if (desk === "1" && !deskReady(id)) {
-      setNote("Open it, use it for a bit, then come back. We time the seat.");
+    const ms = dwellOf(id);
+    if (!rating || ms < 45_000) {
+      setSync("Verifying session activity...");
+      setNote("Not quite. That look was a little thin. Stay with it and try again.");
       return;
     }
-    if (fourthReviewGate() && !flag) {
-      setFlag(true);
-      setNote("Fourth review this device. Pick why it might bounce — then send it anyway.");
-      return;
-    }
+    const gained = reviewPay(ms, rating, body.trim().length, priv.trim().length, desk === "1");
+    let nudge = "";
+    if (body.trim().length > 0 && body.trim().length < 75) nudge += " Public note could use a little more detail.";
+    if (priv.trim().length > 0 && priv.trim().length < 75) nudge += " The note to the developer could use a little more detail.";
     try {
-      await rateListing({ data: { listingId: id, rating, body } });
-      const n = bumpReviewsFiled();
-      let gained = 1;
-      if (desk === "1") gained = 1;
-      if (body.trim().length + priv.trim().length > 750) gained += 1;
-      addFlints(gained);
-      if (desk === "1") {
-        markDeskDone(id);
-        replaceDeskSlot(id, catalog);
+      const filed = await rateListing({ data: { listingId: id, rating, body, privateBody: priv } });
+      if (filed.already) {
+        setNote("You already reviewed this one.");
+        return;
       }
-      setNote(
-        flag
-          ? `Flagged (${flagReason || "unspecified"}). Filed anyway. +${gained} Flints. Review #${n}.`
-          : `Review filed. +${gained} Flints.`,
-      );
+      addFlints(gained);
+      await awardFlints({ data: { amount: Math.max(gained, 1), reason: `review:${id}` } });
+      finishOutbox(id, gained);
+      setNote(`Review filed. +${gained} Flints.${nudge}`);
       setBody("");
-      setFlag(false);
-      setFlagReason(null);
+      setReviewStep(4);
     } catch {
       setNote("Sign in to rate.");
     }
   }
 
   function openPwa() {
-    markDeskOpen(id);
+    markDepart(id);
     setClicks(bumpOpen(id));
-    setTimeout(() => setReady(deskReady(id)), 1000);
+    setSync(null);
+    void recordYardEvent({ data: { listingId: id, kind: "open" } });
     window.open(liveUrl, "_blank", "noreferrer");
   }
 
@@ -179,7 +206,11 @@ function AppPage() {
         <button
           type="button"
           aria-label={saved ? "Unsave" : "Save"}
-          onClick={() => setSaved(toggleSave(id).includes(id))}
+          onClick={() => {
+            const next = toggleSave(id);
+            setSaved(next.includes(id));
+            if (user) void setBookmark({ data: { listingId: id, on: next.includes(id) } });
+          }}
           className="grid size-11 place-items-center"
         >
           <Bookmark className={saved ? "size-5 fill-cat-amber text-cat-amber" : "size-5 text-muted"} />
@@ -188,11 +219,10 @@ function AppPage() {
 
       {desk === "1" ? (
         <p className="mt-3 rounded-lg bg-raised px-3 py-2 text-[12px] text-muted">
-          Desk ticket. Open the PWA, actually poke around (~2 minutes), come back. A 1–5 rating
-          plus public review and private critique. Stars without a note don’t pay Flints.
-          {ready ? " Seat time’s good — write." : " Timer’s running once you open it."}
+          Desk folder. Open it, come back, then the stars show up.
         </p>
       ) : null}
+      {sync ? <p className="mt-2 text-[12px] text-muted">{sync}</p> : null}
 
       {live ? (
         <button
@@ -244,13 +274,68 @@ function AppPage() {
 
       <div className="mt-3 flex flex-wrap gap-1">
         {app.genres.slice(0, 2).map((g) => (
-          <Chip key={g}>{GENRE_META[g]?.label || g}</Chip>
+          <Link key={g} to="/find" search={{ tags: "", genre: g, platform: "" }} className="h-6 rounded-full bg-raised px-2 text-[11px] leading-6 text-muted">
+            {GENRE_META[g]?.label || g}
+          </Link>
         ))}
-        {app.platform ? <Chip>Built with {app.platform}</Chip> : null}
+        {app.platform ? (
+          <Link to="/find" search={{ tags: "", genre: "", platform: app.platform }} className="h-6 rounded-full bg-raised px-2 text-[11px] leading-6 text-muted">
+            Built with {app.platform}
+          </Link>
+        ) : null}
         <Chip>{app.provenance === "pro" ? "Pro" : "Vibe"}</Chip>
         {app.offline ? <Chip>Works offline</Chip> : null}
         {app.installable ? <Chip>Installable</Chip> : null}
       </div>
+      <div className="mt-2 flex flex-wrap gap-1">
+        {(app.tags || []).map((tag) => (
+          <Link key={tag} to="/find" search={{ tags: tag, genre: "", platform: "" }} className="h-6 rounded-full bg-surface px-2 text-[11px] leading-6 ring-1 ring-border">
+            {tag}
+          </Link>
+        ))}
+      </div>
+      {user ? (
+        <form
+          className="mt-2 space-y-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const custom = tagFree.split(",").map(cleanTag).filter(Boolean);
+            const tags = [...tagPick, ...custom].slice(0, TAG_CAP);
+            if (!tags.length) return;
+            void addListingTags({ data: { listingId: id, tags } }).then((r) => {
+              if (r.flints) addFlints(r.flints);
+              setTagMsg(r.added ? `Added ${r.added}.${r.flints ? ` +${r.flints} Flint.` : ""}` : "Those are already on it.");
+              setTagFree("");
+              setTagPick([]);
+            });
+          }}
+        >
+          <p className="text-[10px] tracking-wide text-muted uppercase">Add tags</p>
+          <div className="flex flex-wrap gap-1">
+            {TAG_LIST.filter((t) => !(app.tags || []).some((x) => x.toLowerCase() === t.toLowerCase())).slice(0, 12).map((t, i) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTagPick((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]))}
+                className={cn("spec-pick", tagPick.includes(t) && "spec-pick-on")}
+                style={specVars(i + 50)}
+              >
+                <span className="spec-pick-face">{t}</span>
+              </button>
+            ))}
+          </div>
+          <input
+            value={tagFree}
+            onChange={(e) => setTagFree(e.target.value)}
+            placeholder="Your words, commas, emoji"
+            className="h-8 w-full rounded-md border border-border bg-bg px-2 text-[12px]"
+          />
+          <button type="submit" className="h-7 rounded-full bg-primary px-3 text-[11px] text-primary-fg">
+            Add
+          </button>
+          {tagMsg ? <p className="text-[11px] text-muted">{tagMsg}</p> : null}
+        </form>
+      ) : null}
 
       <h2 className="mt-5 text-[11px] font-medium text-muted uppercase">About</h2>
       <p className="mt-1 text-[13px] leading-relaxed text-muted">
@@ -271,35 +356,81 @@ function AppPage() {
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => setContribute((v) => !v)}
-        className="mt-4 h-9 w-full rounded-full bg-raised text-[12px] font-medium ring-1 ring-border"
-      >
-        Contribute / improve this listing
-      </button>
-      {contribute ? (
-        <ul className="mt-2 space-y-1 text-[12px] text-muted">
-          <li>
-            <Link to="/app/$id" params={{ id }} search={{ desk: "1" }} className="text-primary">
-              Take this review / add to my Desk
-            </Link>
-          </li>
-          <li>Public review and private critique live below.</li>
-          <li>Screenshots and walkthroughs: 3 approved shots = 1 Flint. Video ~45s–2min pays more. 24h we still pay; 72h it publishes.</li>
-        </ul>
-      ) : null}
+      <div className="mt-4 space-y-2 rounded-lg bg-surface p-3 ring-1 ring-border">
+        <p className="text-[12px] text-fg">Contribute</p>
+        {!user ? (
+          <Link to="/login" className="text-[12px] text-primary">
+            Sign in first
+          </Link>
+        ) : fixStep === 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {["Wrong info", "Missing summary", "Broken link", "Screenshot note"].map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => {
+                  setFixKind(k);
+                  setFixStep(1);
+                }}
+                className="h-8 rounded-full bg-raised px-3 text-[11px]"
+              >
+                {k}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (fixKind === "Broken link") {
+                reportBroken(id);
+                setReported(true);
+                void fileLinkReport({ data: { listingId: id } });
+                void awardFlints({ data: { amount: 2, reason: `dead:${id}` } }).then((r) => {
+                  if (!r.already) addFlints(2);
+                });
+              } else {
+                void awardFlints({ data: { amount: 1, reason: `fix:${id}:${fixKind}` } }).then((r) => {
+                  if (!r.already) addFlints(1);
+                });
+              }
+              setFixNote("Filed. Thanks.");
+              setFixStep(2);
+            }}
+          >
+            <p className="text-[11px] text-muted">{fixKind}</p>
+            <textarea
+              required
+              minLength={12}
+              value={fixText}
+              onChange={(e) => setFixText(e.target.value)}
+              placeholder="What should we know?"
+              className="mt-1 h-16 w-full rounded-md border border-border bg-bg p-2 text-[12px]"
+            />
+            <button type="submit" className="mt-2 h-8 rounded-full bg-primary px-3 text-[12px] text-primary-fg">
+              Send
+            </button>
+          </form>
+        )}
+        {fixNote ? <p className="text-[11px] text-muted">{fixNote}</p> : null}
+      </div>
 
       <p className="mt-3 text-[11px] text-muted">
         {claim ? (
           "Verified owner on file."
-        ) : user ? (
-          <form onSubmit={onClaim} className="mt-2 space-y-2 rounded-lg bg-surface p-3 ring-1 ring-border">
-          <p className="text-[12px] text-fg">Is this you? Claim this app.</p>
-            <p className="text-[11px] text-muted">
-              You don’t own it because you tapped a button. Send a contact email and how we can
-              tell it’s yours. We write back.
-            </p>
+        ) : user && claimStep === 0 ? (
+          <button type="button" onClick={() => setClaimStep(1)} className="text-[12px] text-primary">
+            This is my app
+          </button>
+        ) : user && claimStep === 1 ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setClaimStep(2);
+            }}
+            className="space-y-2"
+          >
+            <p className="text-[12px] text-fg">Where do we write you?</p>
             <input
               type="email"
               required
@@ -308,6 +439,13 @@ function AppPage() {
               placeholder="you@studio.dev"
               className="h-9 w-full rounded-md border border-border bg-bg px-2"
             />
+            <button type="submit" className="h-8 rounded-full bg-primary px-3 text-[12px] text-primary-fg">
+              Next
+            </button>
+          </form>
+        ) : user ? (
+          <form onSubmit={onClaim} className="space-y-2">
+            <p className="text-[12px] text-fg">How can we tell it’s yours?</p>
             <textarea
               required
               minLength={8}
@@ -334,15 +472,44 @@ function AppPage() {
       <button
         type="button"
         onClick={() => {
+          if (!user) return;
           reportBroken(id);
           setReported(true);
+          void fileLinkReport({ data: { listingId: id } }).catch(() => {});
+          void awardFlints({ data: { amount: 2, reason: `dead:${id}` } })
+            .then((r) => {
+              if (!r.already) addFlints(2);
+            })
+            .catch(() => {});
         }}
         className="mt-3 text-[11px] text-muted underline"
       >
-        {reported ? "Broken-link report filed" : "Report a broken link"}
+        {user ? (reported ? "Broken-link report filed. +2 Flints." : "Report a broken link") : "Sign in to report a broken link"}
       </button>
+      {user ? (
+        <button
+          type="button"
+          className="mt-2 block text-[11px] text-muted underline"
+          onClick={() => {
+            const shareUrl = window.location.href;
+            const go = navigator.share
+              ? navigator.share({ title: app.name, url: shareUrl })
+              : navigator.clipboard.writeText(shareUrl);
+            void Promise.resolve(go).then(() =>
+              awardFlints({ data: { amount: 1, reason: `share:${id}` } }).then((r) => {
+                if (!r.already) {
+                  addFlints(1);
+                  setNote("Shared. +1 Flint.");
+                } else setNote("Already shared this one.");
+              }),
+            );
+          }}
+        >
+          Share this app
+        </button>
+      ) : null}
 
-      <h2 className="mt-6 text-[11px] font-medium text-muted uppercase">Yard ratings</h2>
+      <h2 className="mt-6 text-[11px] font-medium text-muted uppercase">Appendix ratings</h2>
       <p className="text-[11px] text-muted">
         These are reviews left here. The old 4.7 / 250,000 figures were sample wallpaper — gone.
       </p>
@@ -358,55 +525,57 @@ function AppPage() {
         </ul>
       )}
       {user ? (
-        <form onSubmit={onRate} className="mt-3 space-y-2">
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button key={n} type="button" onClick={() => setRating(n)}>
-                <Star
-                  className={n <= rating ? "size-4 fill-cat-amber text-cat-amber" : "size-4 text-subtle"}
-                />
-              </button>
-            ))}
-          </div>
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            minLength={24}
-            placeholder="What happened when you used it? 150 characters. Public."
-            className="h-20 w-full rounded-md border border-border bg-surface p-2 text-[12px]"
-          />
-          <textarea
-            value={priv}
-            onChange={(e) => setPriv(e.target.value)}
-            minLength={150}
-            placeholder="Private note to the developer. 150 characters. Not published."
-            className="h-20 w-full rounded-md border border-border bg-surface p-2 text-[12px]"
-          />
-          {flag ? (
-            <div className="space-y-1 rounded-lg bg-raised p-2">
-              <p className="text-[11px] text-muted">
-                Fourth review always comes back with a reason. Pick one. You can still file.
-              </p>
-              {["Too short", "Didn’t sit with the PWA", "Sounds like a bot", "Promo / copy-paste", "Something else"].map(
-                (r) => (
-                  <label key={r} className="flex items-center gap-2 text-[12px]">
-                    <input
-                      type="radio"
-                      name="flag"
-                      checked={flagReason === r}
-                      onChange={() => setFlagReason(r)}
-                    />
-                    {r}
-                  </label>
-                ),
-              )}
-            </div>
+        <div className="mt-3 space-y-2">
+          {reviewStep < 1 ? (
+            <button
+              type="button"
+              onClick={() => {
+                const ok = sendToInbox(id);
+                setNote(ok ? "Sent to your desk inbox." : "You asked not to see this one again.");
+                if (ok) setReviewStep(1);
+              }}
+              className="h-8 rounded-full bg-raised px-3 text-[12px] ring-1 ring-border"
+            >
+              Send to my desk
+            </button>
           ) : null}
-          <button type="submit" className="h-8 rounded-full bg-primary px-3 text-[12px] text-primary-fg">
-            {flag ? "Resubmit anyway" : "Submit review"}
-          </button>
+          {reviewStep >= 1 && lookPay(dwell) < 1 ? (
+            <p className="text-[12px] text-muted">Open it, then come back. Stars show up after a real look.</p>
+          ) : null}
+          {lookPay(dwell) >= 1 ? (
+            <form onSubmit={onRate} className="space-y-2">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} type="button" onClick={() => { setRating(n); setReviewStep(2); }}>
+                    <Star className={n <= rating ? "size-4 fill-cat-amber text-cat-amber" : "size-4 text-subtle"} />
+                  </button>
+                ))}
+              </div>
+              {reviewStep >= 2 ? (
+                <textarea
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Public note. What happened when you used it?"
+                  className="h-20 w-full rounded-md border border-border bg-surface p-2 text-[12px]"
+                />
+              ) : null}
+              {reviewStep >= 2 && body.trim().length > 0 ? (
+                <textarea
+                  value={priv}
+                  onChange={(e) => setPriv(e.target.value)}
+                  placeholder="Private note for the developer. Not published."
+                  className="h-20 w-full rounded-md border border-border bg-surface p-2 text-[12px]"
+                />
+              ) : null}
+              {reviewStep >= 2 ? (
+                <button type="submit" className="h-8 rounded-full bg-primary px-3 text-[12px] text-primary-fg">
+                  Submit review
+                </button>
+              ) : null}
+            </form>
+          ) : null}
           {note ? <p className="text-[11px] text-muted">{note}</p> : null}
-        </form>
+        </div>
       ) : (
         <p className="mt-2 text-[12px] text-muted">
           <Link to="/login" className="text-primary">

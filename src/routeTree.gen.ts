@@ -25,6 +25,7 @@ import { Route as MeRouteImport } from './routes/me'
 import { Route as PeopleRouteImport } from './routes/people'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as WellRouteImport } from './routes/well'
 import { Route as AppIdRouteImport } from './routes/app.$id'
 import { Route as CategoryGenreRouteImport } from './routes/category.$genre'
 import { Route as MakerSlugRouteImport } from './routes/maker.$slug'
@@ -110,6 +111,11 @@ const StudioRoute = StudioRouteImport.update({
   path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WellRoute = WellRouteImport.update({
+  id: '/well',
+  path: '/well',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppIdRoute = AppIdRouteImport.update({
   id: '/app/$id',
   path: '/app/$id',
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/people': typeof PeopleRoute
   '/saved': typeof SavedRoute
   '/studio': typeof StudioRoute
+  '/well': typeof WellRoute
   '/app/$id': typeof AppIdRoute
   '/category/$genre': typeof CategoryGenreRoute
   '/maker/$slug': typeof MakerSlugRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/people': typeof PeopleRoute
   '/saved': typeof SavedRoute
   '/studio': typeof StudioRoute
+  '/well': typeof WellRoute
   '/app/$id': typeof AppIdRoute
   '/category/$genre': typeof CategoryGenreRoute
   '/maker/$slug': typeof MakerSlugRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/people': typeof PeopleRoute
   '/saved': typeof SavedRoute
   '/studio': typeof StudioRoute
+  '/well': typeof WellRoute
   '/app/$id': typeof AppIdRoute
   '/category/$genre': typeof CategoryGenreRoute
   '/maker/$slug': typeof MakerSlugRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/people'
     | '/saved'
     | '/studio'
+    | '/well'
     | '/app/$id'
     | '/category/$genre'
     | '/maker/$slug'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/people'
     | '/saved'
     | '/studio'
+    | '/well'
     | '/app/$id'
     | '/category/$genre'
     | '/maker/$slug'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/people'
     | '/saved'
     | '/studio'
+    | '/well'
     | '/app/$id'
     | '/category/$genre'
     | '/maker/$slug'
@@ -284,6 +296,7 @@ export interface RootRouteChildren {
   PeopleRoute: typeof PeopleRoute
   SavedRoute: typeof SavedRoute
   StudioRoute: typeof StudioRoute
+  WellRoute: typeof WellRoute
   AppIdRoute: typeof AppIdRoute
   CategoryGenreRoute: typeof CategoryGenreRoute
   MakerSlugRoute: typeof MakerSlugRoute
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/well': {
+      id: '/well'
+      path: '/well'
+      fullPath: '/well'
+      preLoaderRoute: typeof WellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/$id': {
       id: '/app/$id'
       path: '/app/$id'
@@ -452,6 +472,7 @@ const rootRouteChildren: RootRouteChildren = {
   PeopleRoute: PeopleRoute,
   SavedRoute: SavedRoute,
   StudioRoute: StudioRoute,
+  WellRoute: WellRoute,
   AppIdRoute: AppIdRoute,
   CategoryGenreRoute: CategoryGenreRoute,
   MakerSlugRoute: MakerSlugRoute,
